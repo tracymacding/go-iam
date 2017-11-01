@@ -36,6 +36,19 @@ func (mgd *MongoDriver) Open(args ...interface{}) (db.Service, error) {
 		return nil, err
 	}
 
+	c = session.DB("go_iam").C("account")
+	index = mgo.Index{
+		Key:        []string{"name"},
+		Unique:     true,
+		DropDups:   true,
+		Background: true,
+		Sparse:     true,
+	}
+	err = c.EnsureIndex(index)
+	if err != nil {
+		return nil, err
+	}
+
 	return &mongoService{mgServer}, nil
 }
 

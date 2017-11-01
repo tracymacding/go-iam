@@ -8,6 +8,7 @@ import (
 	"github.com/go-iam/db"
 	_ "github.com/go-iam/db/mongodb"
 	_ "github.com/go-iam/db/mysql"
+	"github.com/go-iam/handler/account"
 	"github.com/go-iam/handler/common"
 	"github.com/go-iam/handler/user"
 	"github.com/go-iam/middleware"
@@ -19,7 +20,13 @@ func setupRouter() *mux.Router {
 	router := mux.NewRouter()
 	router.HookFunc(mux.HookAfterRouter, common.LogHandler).HookFunc(mux.HookAfterRouter, common.SendResponseHandler)
 
-	router.HandleFunc("/", user.CreateUserHandler).Methods("GET").Queries("Action", "CreateIamUser").Queries("UserName", "{username}")
+	router.HandleFunc("/", user.CreateUserHandler).Methods("GET").Queries("Action", "CreateIamUser")
+	router.HandleFunc("/", account.CreateAccountHandler).Methods("GET").Queries("Action", "CreateAccount")
+	router.HandleFunc("/", account.GetAccountHandler).Methods("GET").Queries("Action", "GetAccount")
+	router.HandleFunc("/", account.DeleteAccountHandler).Methods("GET").Queries("Action", "DeleteAccount")
+	router.HandleFunc("/", account.UpdateAccountHandler).Methods("GET").Queries("Action", "UpdateAccount")
+	router.HandleFunc("/", account.ListAccountHandler).Methods("GET").Queries("Action", "ListAccount")
+	router.HandleFunc("/", account.LoginAccountHandler).Methods("GET").Queries("Action", "LoginAccount")
 	return router
 }
 

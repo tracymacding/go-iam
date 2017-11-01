@@ -4,6 +4,14 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+type AccountBean struct {
+	AccountId   bson.ObjectId `bson:"_id"`
+	AccountName string        `bson:"name"`
+	Password    string        `bson:"password"`
+	AccountType int           `bson:"type"`
+	CreateDate  string        `bson:"create_date"`
+}
+
 type UserBean struct {
 	UserId      bson.ObjectId `bson:"_id"`
 	UserName    string        `bson:"name"`

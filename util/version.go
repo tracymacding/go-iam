@@ -1,3 +1,3 @@
 package util
-const BuildGitVersion="8d1eb1c0a85d5aa7fb03e786b324f212a2a44e10"
-const BuildGitDate="2017103110"
+const BuildGitVersion="22bf6390a05c4034a3b5a75fa4918e4e1f57bc2a"
+const BuildGitDate="2017103119"
