@@ -6,6 +6,7 @@ import (
 	"github.com/go-iam/context"
 	"github.com/go-iam/db"
 	"github.com/go-iam/gerror"
+	"github.com/go-iam/handler/util"
 	"net/http"
 	"time"
 )
@@ -24,14 +25,6 @@ type Auther interface {
 
 type Responser interface {
 	Response()
-}
-
-type Account struct {
-	accountId   string
-	accountName string
-	password    string
-	accountType AccountType
-	createDate  string
 }
 
 type CreateAccountApi struct {
@@ -72,7 +65,7 @@ func (caa *CreateAccountApi) Validate() {
 }
 
 func (caa *CreateAccountApi) Parse() {
-	params := parseParameters(caa.req)
+	params := util.ParseParameters(caa.req)
 	caa.account.accountName = params["AccountName"]
 	caa.account.password = params["Password"]
 	caa.account.accountType = ParseAccountType(params["AccountType"])
@@ -88,12 +81,8 @@ func (caa *CreateAccountApi) Auth() {
 func (caa *CreateAccountApi) Response() {
 	json := simplejson.New()
 	if caa.err == nil {
-		accJson := simplejson.New()
-		accJson.Set("AccountId", caa.account.accountId)
-		accJson.Set("AccountName", caa.account.accountName)
-		accJson.Set("AccountType", caa.account.accountType.String())
-		accJson.Set("CreateDate", caa.account.createDate)
-		json.Set("Account", accJson)
+		j := caa.account.Json()
+		json.Set("Account", j)
 	} else {
 		context.Set(caa.req, "request_error", gerror.NewIAMError(caa.status, caa.err))
 		json.Set("ErrorMessage", caa.err.Error())

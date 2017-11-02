@@ -5,6 +5,7 @@ import (
 	"github.com/go-iam/context"
 	"github.com/go-iam/db"
 	"github.com/go-iam/gerror"
+	"github.com/go-iam/handler/util"
 	"net/http"
 )
 
@@ -16,7 +17,7 @@ type DeleteAccountApi struct {
 }
 
 func (daa *DeleteAccountApi) Parse() {
-	params := parseParameters(daa.req)
+	params := util.ParseParameters(daa.req)
 	daa.account.accountId = params["AccountId"]
 }
 

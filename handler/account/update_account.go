@@ -5,6 +5,7 @@ import (
 	"github.com/go-iam/context"
 	"github.com/go-iam/db"
 	"github.com/go-iam/gerror"
+	"github.com/go-iam/handler/util"
 	"net/http"
 )
 
@@ -15,17 +16,8 @@ type UpdateAccountApi struct {
 	account Account
 }
 
-func parseParameters(r *http.Request) map[string]string {
-	params := make(map[string]string, 0)
-	vals := r.URL.Query()
-	for k, _ := range vals {
-		params[k] = vals.Get(k)
-	}
-	return params
-}
-
 func (uaa *UpdateAccountApi) Parse() {
-	params := parseParameters(uaa.req)
+	params := util.ParseParameters(uaa.req)
 	uaa.account.accountId = params["AccountId"]
 	if params["NewAccountName"] != "" {
 		uaa.account.accountName = params["NewAccountName"]
@@ -70,10 +62,8 @@ func (uaa *UpdateAccountApi) updateAccount() {
 func (uaa *UpdateAccountApi) Response() {
 	json := simplejson.New()
 	if uaa.err == nil {
-		accJson := simplejson.New()
-		accJson.Set("AccountId", uaa.account.accountId)
-		accJson.Set("AccountName", uaa.account.accountName)
-		json.Set("Account", accJson)
+		j := uaa.account.Json()
+		json.Set("Account", j)
 	} else {
 		json.Set("ErrorMessage", uaa.err.Error())
 		context.Set(uaa.req, "request_error", gerror.NewIAMError(uaa.status, uaa.err))

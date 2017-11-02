@@ -5,6 +5,7 @@ import (
 	"github.com/go-iam/context"
 	"github.com/go-iam/db"
 	"github.com/go-iam/gerror"
+	"github.com/go-iam/handler/util"
 	"net/http"
 )
 
@@ -17,7 +18,7 @@ type ListAccountApi struct {
 }
 
 func (lsaa *ListAccountApi) Parse() {
-	params := parseParameters(lsaa.req)
+	params := util.ParseParameters(lsaa.req)
 	lsaa.accType = ParseAccountType(params["AccountType"])
 }
 
@@ -41,12 +42,8 @@ func (lsaa *ListAccountApi) Response() {
 	if lsaa.err == nil {
 		jsons := make([]*simplejson.Json, 0)
 		for _, account := range lsaa.accounts {
-			accountJson := simplejson.New()
-			accountJson.Set("AccountId", account.accountId)
-			accountJson.Set("AccountName", account.accountName)
-			accountJson.Set("AccountType", account.accountType.String())
-			accountJson.Set("CreateDate", account.createDate)
-			jsons = append(jsons, accountJson)
+			j := account.Json()
+			jsons = append(jsons, j)
 		}
 		json.Set("Account", jsons)
 	} else {

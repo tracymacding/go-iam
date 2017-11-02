@@ -5,6 +5,7 @@ import (
 	"github.com/bitly/go-simplejson"
 	"github.com/go-iam/context"
 	"github.com/go-iam/gerror"
+	"github.com/go-iam/handler/util"
 	"net/http"
 )
 
@@ -16,7 +17,7 @@ type LoginAccountApi struct {
 }
 
 func (laa *LoginAccountApi) Parse() {
-	params := parseParameters(laa.req)
+	params := util.ParseParameters(laa.req)
 	laa.account.accountId = params["AccountId"]
 	laa.account.accountName = params["AccountName"]
 	laa.account.password = params["Password"]
@@ -53,10 +54,8 @@ func (laa *LoginAccountApi) Response() {
 		json.Set("ErrorMessage", laa.err.Error())
 		context.Set(laa.req, "request_error", gerror.NewIAMError(laa.status, laa.err))
 	} else {
-		accJson := simplejson.New()
-		accJson.Set("AccountId", laa.account.accountId)
-		accJson.Set("AccountName", laa.account.accountName)
-		json.Set("Account", accJson)
+		j := laa.account.Json()
+		json.Set("Account", j)
 		// TODO: fill in system ak/sk pair
 	}
 	json.Set("RequestId", context.Get(laa.req, "request_id"))

@@ -6,6 +6,7 @@ import (
 	"github.com/go-iam/context"
 	"github.com/go-iam/db"
 	"github.com/go-iam/gerror"
+	"github.com/go-iam/handler/util"
 	"net/http"
 )
 
@@ -21,7 +22,7 @@ var (
 )
 
 func (gaa *GetAccountApi) Parse() {
-	params := parseParameters(gaa.req)
+	params := util.ParseParameters(gaa.req)
 	gaa.account.accountId = params["AccountId"]
 }
 
@@ -43,12 +44,8 @@ func (gaa *GetAccountApi) Auth() {
 func (gaa *GetAccountApi) Response() {
 	json := simplejson.New()
 	if gaa.err == nil {
-		accJson := simplejson.New()
-		accJson.Set("AccountId", gaa.account.accountId)
-		accJson.Set("AccountName", gaa.account.accountName)
-		accJson.Set("AccountType", gaa.account.accountType.String())
-		accJson.Set("CreateDate", gaa.account.createDate)
-		json.Set("Account", accJson)
+		j := gaa.account.Json()
+		json.Set("Account", j)
 	} else {
 		context.Set(gaa.req, "request_error", gerror.NewIAMError(gaa.status, gaa.err))
 		json.Set("ErrorMessage", gaa.err.Error())
