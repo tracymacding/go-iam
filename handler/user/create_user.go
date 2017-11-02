@@ -23,6 +23,18 @@ type User struct {
 	account     string
 }
 
+func (user *User) Json() *simplejson.Json {
+	j := simplejson.New()
+	j.Set("UserId", user.userId)
+	j.Set("UserName", user.userName)
+	j.Set("DisplayName", user.displayName)
+	j.Set("MobilePhone", user.phone)
+	j.Set("Email", user.email)
+	j.Set("Comments", user.comments)
+	j.Set("CreateDate", user.createDate)
+	return j
+}
+
 type CreateIAMUserApi struct {
 	req    *http.Request
 	status int
@@ -69,15 +81,8 @@ func (caa *CreateIAMUserApi) Auth() {
 func (caa *CreateIAMUserApi) Response() {
 	json := simplejson.New()
 	if caa.err == nil {
-		userJson := simplejson.New()
-		userJson.Set("UserId", caa.user.userId)
-		userJson.Set("UserName", caa.user.userName)
-		userJson.Set("DisplayName", caa.user.displayName)
-		userJson.Set("MobilePhone", caa.user.phone)
-		userJson.Set("Email", caa.user.email)
-		userJson.Set("Comments", caa.user.comments)
-		userJson.Set("CreateDate", caa.user.createDate)
-		json.Set("User", userJson)
+		j := caa.user.Json()
+		json.Set("User", j)
 	} else {
 		context.Set(caa.req, "request_error", gerror.NewIAMError(caa.status, caa.err))
 		json.Set("ErrorMessage", caa.err.Error())

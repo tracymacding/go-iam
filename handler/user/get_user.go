@@ -39,15 +39,8 @@ func (gua *GetUserApi) Auth() {
 func (gua *GetUserApi) Response() {
 	json := simplejson.New()
 	if gua.err == nil {
-		userJson := simplejson.New()
-		userJson.Set("UserId", gua.user.userId)
-		userJson.Set("UserName", gua.user.userName)
-		userJson.Set("DisplayName", gua.user.displayName)
-		userJson.Set("MobilePhone", gua.user.phone)
-		userJson.Set("Email", gua.user.email)
-		userJson.Set("Comments", gua.user.comments)
-		userJson.Set("CreateDate", gua.user.createDate)
-		json.Set("User", userJson)
+		j := gua.user.Json()
+		json.Set("User", j)
 	} else {
 		context.Set(gua.req, "request_error", gerror.NewIAMError(gua.status, gua.err))
 		json.Set("ErrorMessage", gua.err.Error())

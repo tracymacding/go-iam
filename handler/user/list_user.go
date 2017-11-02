@@ -56,15 +56,8 @@ func (lua *ListUserApi) Response() {
 	if lua.err == nil {
 		jsons := make([]*simplejson.Json, 0)
 		for _, user := range lua.users {
-			userJson := simplejson.New()
-			userJson.Set("UserId", user.userId)
-			userJson.Set("UserName", user.userName)
-			userJson.Set("DisplayName", user.displayName)
-			userJson.Set("MobilePhone", user.phone)
-			userJson.Set("Email", user.email)
-			userJson.Set("Comments", user.comments)
-			userJson.Set("CreateDate", user.createDate)
-			jsons = append(jsons, userJson)
+			j := user.Json()
+			jsons = append(jsons, j)
 		}
 		json.Set("Users", jsons)
 	} else {

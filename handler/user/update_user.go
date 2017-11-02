@@ -79,15 +79,8 @@ func (uua *UpdateUserApi) updateUser() {
 func (uua *UpdateUserApi) Response() {
 	json := simplejson.New()
 	if uua.err == nil {
-		userJson := simplejson.New()
-		userJson.Set("UserId", uua.user.userId)
-		userJson.Set("UserName", uua.user.userName)
-		userJson.Set("DisplayName", uua.user.displayName)
-		userJson.Set("MobilePhone", uua.user.phone)
-		userJson.Set("Email", uua.user.email)
-		userJson.Set("Comments", uua.user.comments)
-		userJson.Set("CreateDate", uua.user.createDate)
-		json.Set("User", userJson)
+		j := uua.user.Json()
+		json.Set("User", j)
 	} else {
 		json.Set("ErrorMessage", uua.err.Error())
 		context.Set(uua.req, "request_error", gerror.NewIAMError(uua.status, uua.err))
