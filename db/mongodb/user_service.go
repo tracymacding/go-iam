@@ -80,10 +80,10 @@ func (ms *mongoService) UpdateIamUser(account, user string, usr *db.UserBean) er
 	err = c.Update(bson.M{"name": user, "account": account}, usr)
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return db.AccountNotExistError
+			return db.UserNotExistError
 		}
 		if mgo.IsDup(err) {
-			return db.AccountExistError
+			return db.UserExistError
 		}
 		return err
 	}
