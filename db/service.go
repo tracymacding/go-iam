@@ -6,6 +6,7 @@ import (
 
 var (
 	UserExistError       = errors.New("user already exist")
+	UserNotExistError    = errors.New("user not exist")
 	AccountExistError    = errors.New("account already exist")
 	AccountNotExistError = errors.New("account not exist")
 )
@@ -20,6 +21,10 @@ type AccountService interface {
 
 type UserService interface {
 	CreateIamUser(usr *UserBean) (*UserBean, error)
+	GetIamUser(account, user string, usr *UserBean) error
+	DeleteIamUser(account, user string) error
+	UpdateIamUser(account, user string, usr *UserBean) error
+	ListIamUser(account, marker string, max int, usrs *[]*UserBean) error
 	UserCountOfAccount(accountId string) (int, error)
 }
 

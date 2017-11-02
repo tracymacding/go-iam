@@ -1,11 +1,12 @@
 package user
 
 import (
-	"fmt"
+	"errors"
 	"github.com/bitly/go-simplejson"
 	"github.com/go-iam/context"
 	"github.com/go-iam/db"
 	"github.com/go-iam/gerror"
+	"github.com/go-iam/handler/util"
 	"net/http"
 	"time"
 )
@@ -22,130 +23,126 @@ type User struct {
 	account     string
 }
 
-// TODO
-func (usr *User) validate() (bool, error) {
-	return true, nil
+type CreateIAMUserApi struct {
+	req    *http.Request
+	status int
+	err    error
+	user   User
 }
 
-func parseUserFromRequest(r *http.Request, usr *User) {
-	vals := r.URL.Query()
-	v, ok := vals["UserName"]
-	if ok && len(v) > 0 {
-		usr.userName = v[0]
+var (
+	MissUserNameError = errors.New("user name missing")
+	MissPasswordError = errors.New("password missing")
+	TooManyUsersError = errors.New("The count of users beyond the current limits")
+)
+
+func (caa *CreateIAMUserApi) Validate() {
+	if caa.user.userName == "" {
+		caa.err = MissUserNameError
+		caa.status = http.StatusBadRequest
+		return
 	}
-	v, ok = vals["DisplayName"]
-	if ok && len(v) > 0 {
-		usr.displayName = v[0]
+	if caa.user.password == "" {
+		caa.err = MissPasswordError
+		caa.status = http.StatusBadRequest
+		return
 	}
-	v, ok = vals["MobilePhone"]
-	if ok && len(v) > 0 {
-		usr.phone = v[0]
-	}
-	v, ok = vals["Email"]
-	if ok && len(v) > 0 {
-		usr.email = v[0]
-	}
-	v, ok = vals["Comments"]
-	if ok && len(v) > 0 {
-		usr.comments = v[0]
-	}
-	v, ok = vals["Password"]
-	if ok && len(v) > 0 {
-		usr.comments = v[0]
-	}
-	// TODO:
-	usr.account = "test"
 }
 
-func createIamUser(usr *User) error {
-	userBean := db.UserBean{
-		UserName:    usr.userName,
-		DisplayName: usr.displayName,
-		Phone:       usr.phone,
-		Email:       usr.email,
-		Comments:    usr.comments,
-		Password:    usr.password,
-		Account:     usr.account,
-		CreateDate:  time.Now().Format(time.RFC3339),
-	}
-	bean, err := db.ActiveService().CreateIamUser(&userBean)
-	if err != nil {
-		return err
-	}
-	usr.userId = bean.UserId.Hex()
-	usr.createDate = userBean.CreateDate
-	return nil
+func (caa *CreateIAMUserApi) Parse() {
+	params := util.ParseParameters(caa.req)
+	caa.user.userName = params["UserName"]
+	caa.user.displayName = params["DisplayName"]
+	caa.user.phone = params["MobilePhone"]
+	caa.user.email = params["Email"]
+	caa.user.comments = params["Comment"]
+	caa.user.password = params["Password"]
 }
 
-func CreateUserResponse(r *http.Request, usr *User, err error) []byte {
+func (caa *CreateIAMUserApi) Auth() {
+	caa.err = doAuth(caa.req)
+	if caa.err != nil {
+		caa.status = http.StatusForbidden
+	}
+}
+
+func (caa *CreateIAMUserApi) Response() {
 	json := simplejson.New()
-	json.Set("RequestId", context.Get(r, "request_id"))
-	if err != nil {
-		json.Set("ErrorMessage", err.Error())
-	} else {
+	if caa.err == nil {
 		userJson := simplejson.New()
-		userJson.Set("UserId", usr.userId)
-		userJson.Set("UserName", usr.userName)
-		userJson.Set("DisplayName", usr.displayName)
-		userJson.Set("MobilePhone", usr.phone)
-		userJson.Set("Email", usr.email)
-		userJson.Set("Comments", usr.comments)
-		userJson.Set("CreateDate", usr.createDate)
+		userJson.Set("UserId", caa.user.userId)
+		userJson.Set("UserName", caa.user.userName)
+		userJson.Set("DisplayName", caa.user.displayName)
+		userJson.Set("MobilePhone", caa.user.phone)
+		userJson.Set("Email", caa.user.email)
+		userJson.Set("Comments", caa.user.comments)
+		userJson.Set("CreateDate", caa.user.createDate)
 		json.Set("User", userJson)
+	} else {
+		context.Set(caa.req, "request_error", gerror.NewIAMError(caa.status, caa.err))
+		json.Set("ErrorMessage", caa.err.Error())
 	}
+	json.Set("RequestId", context.Get(caa.req, "request_id"))
 	data, _ := json.Encode()
-	return data
+	context.Set(caa.req, "response", data)
 }
 
 const (
 	MAX_IAM_USER_PER_ACCOUNT = 100
 )
 
-func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
-	var usr User
-	var err error
-	status := http.StatusOK
-
-	defer func() {
-		if err != nil {
-			context.Set(r, "request_error", gerror.NewIAMError(status, err))
-		}
-		resp := CreateUserResponse(r, &usr, err)
-		context.Set(r, "response", resp)
-	}()
-
-	if err = doAuth(r); err != nil {
-		status = http.StatusForbidden
-		return
-	}
-
-	parseUserFromRequest(r, &usr)
-
-	ok := true
-	if ok, err = usr.validate(); !ok {
-		status = http.StatusBadRequest
-		return
-	}
-
+func (caa *CreateIAMUserApi) createIamUser() {
 	cnt := 0
-	cnt, err = db.ActiveService().UserCountOfAccount(usr.account)
-	if err != nil {
-		status = http.StatusInternalServerError
+	cnt, caa.err = db.ActiveService().UserCountOfAccount(caa.user.account)
+	if caa.err != nil {
+		caa.status = http.StatusInternalServerError
 		return
 	}
 
 	if cnt >= MAX_IAM_USER_PER_ACCOUNT {
-		status = http.StatusConflict
-		err = fmt.Errorf("The count of users beyond the current limits")
+		caa.status = http.StatusConflict
+		caa.err = TooManyUsersError
 		return
 	}
 
-	if err = createIamUser(&usr); err != nil {
-		if err == db.UserExistError {
-			status = http.StatusConflict
+	bean := &db.UserBean{
+		UserName:    caa.user.userName,
+		DisplayName: caa.user.displayName,
+		Phone:       caa.user.phone,
+		Email:       caa.user.email,
+		Comments:    caa.user.comments,
+		Password:    caa.user.password,
+		Account:     caa.user.account,
+		CreateDate:  time.Now().Format(time.RFC3339),
+	}
+	bean, caa.err = db.ActiveService().CreateIamUser(bean)
+	if caa.err != nil {
+		if caa.err == db.UserExistError {
+			caa.status = http.StatusConflict
 		} else {
-			status = http.StatusInternalServerError
+			caa.status = http.StatusInternalServerError
 		}
+		return
+	}
+	caa.user.userId = bean.UserId.Hex()
+	caa.user.createDate = bean.CreateDate
+}
+
+func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
+	caa := CreateIAMUserApi{req: r, status: http.StatusOK}
+	defer caa.Response()
+
+	if caa.Auth(); caa.err != nil {
+		return
+	}
+
+	caa.Parse()
+
+	if caa.Validate(); caa.err != nil {
+		return
+	}
+
+	if caa.createIamUser(); caa.err != nil {
 		return
 	}
 

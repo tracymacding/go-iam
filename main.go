@@ -20,13 +20,17 @@ func setupRouter() *mux.Router {
 	router := mux.NewRouter()
 	router.HookFunc(mux.HookAfterRouter, common.LogHandler).HookFunc(mux.HookAfterRouter, common.SendResponseHandler)
 
-	router.HandleFunc("/", user.CreateUserHandler).Methods("GET").Queries("Action", "CreateIamUser")
 	router.HandleFunc("/", account.CreateAccountHandler).Methods("GET").Queries("Action", "CreateAccount")
 	router.HandleFunc("/", account.GetAccountHandler).Methods("GET").Queries("Action", "GetAccount")
 	router.HandleFunc("/", account.DeleteAccountHandler).Methods("GET").Queries("Action", "DeleteAccount")
 	router.HandleFunc("/", account.UpdateAccountHandler).Methods("GET").Queries("Action", "UpdateAccount")
 	router.HandleFunc("/", account.ListAccountHandler).Methods("GET").Queries("Action", "ListAccount")
 	router.HandleFunc("/", account.LoginAccountHandler).Methods("GET").Queries("Action", "LoginAccount")
+
+	router.HandleFunc("/", user.CreateUserHandler).Methods("GET").Queries("Action", "CreateIamUser")
+	router.HandleFunc("/", user.GetIAMUserHandler).Methods("GET").Queries("Action", "GetIamUser")
+	router.HandleFunc("/", user.DeleteIAMUserHandler).Methods("GET").Queries("Action", "DeleteIamUser")
+	router.HandleFunc("/", user.UpdateIAMUserHandler).Methods("GET").Queries("Action", "UpdateIamUser")
 	return router
 }
 

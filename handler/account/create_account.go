@@ -23,7 +23,7 @@ type Auther interface {
 }
 
 type Responser interface {
-	Response(body interface{}, err error)
+	Response()
 }
 
 type Account struct {
