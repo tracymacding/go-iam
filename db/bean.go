@@ -24,6 +24,14 @@ type UserBean struct {
 	CreateDate  string        `bson:"create_date"`
 }
 
+type GroupBean struct {
+	GroupId    bson.ObjectId `bson:"_id"`
+	GroupName  string        `bson:"name"`
+	Comments   string        `bson:"comments"`
+	Account    string        `bson:"account"`
+	CreateDate string        `bson:"create_date"`
+}
+
 type KeyBean struct {
 	KeyId       string `bson:"_id"`
 	CreatorType int    `bson:"creator_type"`

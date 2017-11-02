@@ -50,7 +50,7 @@ func (dua *DeleteUserApi) Response() {
 func (dua *DeleteUserApi) deleteUser() {
 	dua.err = db.ActiveService().DeleteIamUser(dua.user.account, dua.user.userName)
 	if dua.err != nil {
-		if dua.err == db.AccountNotExistError {
+		if dua.err == db.UserNotExistError {
 			dua.status = http.StatusNotFound
 		} else {
 			dua.status = http.StatusInternalServerError

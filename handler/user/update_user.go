@@ -67,9 +67,9 @@ func (uua *UpdateUserApi) updateUser() {
 	}
 	user, account := uua.user.userName, uua.user.account
 	uua.err = db.ActiveService().UpdateIamUser(user, account, &bean)
-	if uua.err == db.AccountNotExistError {
+	if uua.err == db.UserNotExistError {
 		uua.status = http.StatusNotFound
-	} else if uua.err == db.AccountExistError {
+	} else if uua.err == db.UserExistError {
 		uua.status = http.StatusConflict
 	} else {
 		uua.status = http.StatusInternalServerError

@@ -10,6 +10,7 @@ import (
 	_ "github.com/go-iam/db/mysql"
 	"github.com/go-iam/handler/account"
 	"github.com/go-iam/handler/common"
+	"github.com/go-iam/handler/group"
 	"github.com/go-iam/handler/user"
 	"github.com/go-iam/middleware"
 	"github.com/go-iam/mux"
@@ -31,6 +32,14 @@ func setupRouter() *mux.Router {
 	router.HandleFunc("/", user.GetIAMUserHandler).Methods("GET").Queries("Action", "GetIamUser")
 	router.HandleFunc("/", user.DeleteIAMUserHandler).Methods("GET").Queries("Action", "DeleteIamUser")
 	router.HandleFunc("/", user.UpdateIAMUserHandler).Methods("GET").Queries("Action", "UpdateIamUser")
+	router.HandleFunc("/", user.ListIAMUserHandler).Methods("GET").Queries("Action", "ListIamUser")
+
+	router.HandleFunc("/", group.CreateGroupHandler).Methods("GET").Queries("Action", "CreateGroup")
+	router.HandleFunc("/", group.GetGroupHandler).Methods("GET").Queries("Action", "GetGroup")
+	router.HandleFunc("/", group.DeleteGroupHandler).Methods("GET").Queries("Action", "DeleteGroup")
+	router.HandleFunc("/", group.UpdateGroupHandler).Methods("GET").Queries("Action", "UpdateGroup")
+	router.HandleFunc("/", group.ListGroupHandler).Methods("GET").Queries("Action", "ListGroup")
+
 	return router
 }
 

@@ -9,6 +9,8 @@ var (
 	UserNotExistError    = errors.New("user not exist")
 	AccountExistError    = errors.New("account already exist")
 	AccountNotExistError = errors.New("account not exist")
+	GroupExistError      = errors.New("group already exist")
+	GroupNotExistError   = errors.New("group not exist")
 )
 
 type AccountService interface {
@@ -28,6 +30,15 @@ type UserService interface {
 	UserCountOfAccount(accountId string) (int, error)
 }
 
+type GroupService interface {
+	CreateGroup(group *GroupBean) (*GroupBean, error)
+	GetGroup(account, group string, grp *GroupBean) error
+	DeleteGroup(account, group string) error
+	UpdateGroup(account, group string, grp *GroupBean) error
+	ListGroup(account, marker string, max int, groups *[]*GroupBean) error
+	GroupCountOfAccount(accountId string) (int, error)
+}
+
 type KeyService interface {
 	GetKey(keyId string) (*KeyBean, error)
 }
@@ -35,5 +46,6 @@ type KeyService interface {
 type Service interface {
 	AccountService
 	UserService
+	GroupService
 	KeyService
 }
