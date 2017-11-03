@@ -11,6 +11,10 @@ var (
 	AccountNotExistError = errors.New("account not exist")
 	GroupExistError      = errors.New("group already exist")
 	GroupNotExistError   = errors.New("group not exist")
+	PolicyExistError     = errors.New("policy already exist")
+	PolicyNotExistError  = errors.New("policy not exist")
+	KeyExistError        = errors.New("access key already exist")
+	KeyNotExistError     = errors.New("access key not exist")
 )
 
 type AccountService interface {
@@ -39,13 +43,28 @@ type GroupService interface {
 	GroupCountOfAccount(accountId string) (int, error)
 }
 
+type PolicyService interface {
+	CreatePolicy(policy *PolicyBean) (*PolicyBean, error)
+	GetPolicy(account, policy string, bean *PolicyBean) error
+	DeletePolicy(account, policy string) error
+	UpdatePolicy(account, policy string, bean *PolicyBean) error
+	ListPolicy(account, marker string, ptype, max int, groups *[]*PolicyBean) error
+	PolicyCountOfAccount(accountId string) (int, error)
+}
+
 type KeyService interface {
-	GetKey(keyId string) (*KeyBean, error)
+	CreateKey(key *KeyBean) (*KeyBean, error)
+	GetKey(id string, key *KeyBean) error
+	DeleteKey(accessKeyId string) error
+	UpdateKey(id string, key *KeyBean) error
+	ListKey(entity string, entitype int, keys *[]*KeyBean) error
+	KeyCountOfEntity(entity string, entitype int) (int, error)
 }
 
 type Service interface {
 	AccountService
 	UserService
 	GroupService
+	PolicyService
 	KeyService
 }

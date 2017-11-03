@@ -11,6 +11,8 @@ import (
 	"github.com/go-iam/handler/account"
 	"github.com/go-iam/handler/common"
 	"github.com/go-iam/handler/group"
+	"github.com/go-iam/handler/key"
+	"github.com/go-iam/handler/policy"
 	"github.com/go-iam/handler/user"
 	"github.com/go-iam/middleware"
 	"github.com/go-iam/mux"
@@ -39,6 +41,18 @@ func setupRouter() *mux.Router {
 	router.HandleFunc("/", group.DeleteGroupHandler).Methods("GET").Queries("Action", "DeleteGroup")
 	router.HandleFunc("/", group.UpdateGroupHandler).Methods("GET").Queries("Action", "UpdateGroup")
 	router.HandleFunc("/", group.ListGroupHandler).Methods("GET").Queries("Action", "ListGroup")
+
+	router.HandleFunc("/", policy.CreatePolicyHandler).Methods("GET").Queries("Action", "CreatePolicy")
+	router.HandleFunc("/", policy.GetPolicyHandler).Methods("GET").Queries("Action", "GetPolicy")
+	router.HandleFunc("/", policy.DeletePolicyHandler).Methods("GET").Queries("Action", "DeletePolicy")
+	router.HandleFunc("/", policy.UpdatePolicyHandler).Methods("GET").Queries("Action", "UpdatePolicy")
+	router.HandleFunc("/", policy.ListPolicyHandler).Methods("GET").Queries("Action", "ListPolicy")
+
+	router.HandleFunc("/", key.CreateKeyHandler).Methods("GET").Queries("Action", "CreateAccessKey")
+	router.HandleFunc("/", key.GetKeyHandler).Methods("GET").Queries("Action", "GetAccessKey")
+	router.HandleFunc("/", key.DeleteKeyHandler).Methods("GET").Queries("Action", "DeleteAccessKey")
+	router.HandleFunc("/", key.UpdateKeyHandler).Methods("GET").Queries("Action", "UpdateAccessKey")
+	router.HandleFunc("/", key.ListKeyHandler).Methods("GET").Queries("Action", "ListAccessKey")
 
 	return router
 }

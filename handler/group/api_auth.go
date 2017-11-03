@@ -9,12 +9,13 @@ import (
 )
 
 func doAuth(r *http.Request) error {
-	keyInfo, err := db.ActiveService().GetKey(mux.Vars(r)["AccessKeyId"])
+	keyInfo := db.KeyBean{}
+	err := db.ActiveService().GetKey(mux.Vars(r)["AccessKeyId"], &keyInfo)
 	if err != nil {
 		return err
 	}
 
-	owner, err := key.GetKeyOwner(keyInfo.KeyId, keyInfo.CreatorType)
+	owner, err := key.GetKeyOwner(keyInfo.AccessKeyId.Hex(), keyInfo.Entitype)
 	if err != nil {
 		return err
 	}

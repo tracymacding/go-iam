@@ -1,4 +1,4 @@
-package account
+package policy
 
 import (
 	"github.com/go-iam/db"

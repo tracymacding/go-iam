@@ -1,8 +1,7 @@
-package account
+package key
 
 import (
 	"github.com/go-iam/db"
-	"github.com/go-iam/handler/key"
 	"github.com/go-iam/mux"
 	"github.com/go-iam/security"
 	"net/http"
@@ -15,7 +14,7 @@ func doAuth(r *http.Request) error {
 		return err
 	}
 
-	owner, err := key.GetKeyOwner(keyInfo.AccessKeyId.Hex(), keyInfo.Entitype)
+	owner, err := GetKeyOwner(keyInfo.AccessKeyId.Hex(), keyInfo.Entitype)
 	if err != nil {
 		return err
 	}

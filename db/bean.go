@@ -32,7 +32,23 @@ type GroupBean struct {
 	CreateDate string        `bson:"create_date"`
 }
 
+type PolicyBean struct {
+	PolicyId    bson.ObjectId `bson:"_id"`
+	PolicyName  string        `bson:"name"`
+	PolicyType  string        `bson:"type"`
+	Document    string        `bson:"document"`
+	Description string        `bson:"description"`
+	Version     string        `bson:"version"`
+	Account     string        `bson:"account"`
+	CreateDate  string        `bson:"create_date"`
+	UpdateDate  string        `bson:"update_date"`
+}
+
 type KeyBean struct {
-	KeyId       string `bson:"_id"`
-	CreatorType int    `bson:"creator_type"`
+	AccessKeyId     bson.ObjectId `bson:"_id"`
+	AccessKeySecret string        `bson:"secret"`
+	Status          int           `bson:"status"`
+	Entity          string        `bson:"entity"`
+	Entitype        int           `bson:"entitype"`
+	CreateDate      string        `bson:"create_date"`
 }
