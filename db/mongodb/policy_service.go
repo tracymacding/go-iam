@@ -47,6 +47,26 @@ func (ms *mongoService) GetPolicy(account, policy string, bean *db.PolicyBean) e
 	return nil
 }
 
+func (ms *mongoService) GetPolicyById(policyId string, bean *db.PolicyBean) error {
+	session, err := mgo.Dial(ms.servers)
+	if err != nil {
+		return err
+	}
+
+	defer session.Close()
+	session.SetMode(mgo.Monotonic, true)
+
+	c := session.DB("go_iam").C("policy")
+	err = c.FindId(policyId).One(bean)
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			return db.PolicyNotExistError
+		}
+		return err
+	}
+	return nil
+}
+
 func (ms *mongoService) DeletePolicy(account, policy string) error {
 	session, err := mgo.Dial(ms.servers)
 	if err != nil {

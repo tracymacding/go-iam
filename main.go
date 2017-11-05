@@ -53,6 +53,14 @@ func setupRouter() *mux.Router {
 	router.HandleFunc("/", policy.UpdatePolicyHandler).Methods("GET").Queries("Action", "UpdatePolicy")
 	router.HandleFunc("/", policy.ListPolicyHandler).Methods("GET").Queries("Action", "ListPolicy")
 
+	router.HandleFunc("/", policy.UserAttachPolicyHandler).Methods("GET").Queries("Action", "AttachPolicyToUser")
+	router.HandleFunc("/", policy.UserDetachPolicyHandler).Methods("GET").Queries("Action", "DetachPolicyFromUser")
+	router.HandleFunc("/", policy.GroupAttachPolicyHandler).Methods("GET").Queries("Action", "AttachPolicyToGroup")
+	router.HandleFunc("/", policy.GroupDetachPolicyHandler).Methods("GET").Queries("Action", "DetachPolicyFromGroup")
+	router.HandleFunc("/", policy.ListUserPolicyHandler).Methods("GET").Queries("Action", "ListPoliciesForUser")
+	router.HandleFunc("/", policy.ListGroupPolicyHandler).Methods("GET").Queries("Action", "ListPoliciesForGroup")
+	router.HandleFunc("/", policy.ListPolicyEntityHandler).Methods("GET").Queries("Action", "ListEntitiesForPolicy")
+
 	router.HandleFunc("/", key.CreateKeyHandler).Methods("GET").Queries("Action", "CreateAccessKey")
 	router.HandleFunc("/", key.GetKeyHandler).Methods("GET").Queries("Action", "GetAccessKey")
 	router.HandleFunc("/", key.DeleteKeyHandler).Methods("GET").Queries("Action", "DeleteAccessKey")

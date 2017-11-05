@@ -5,18 +5,22 @@ import (
 )
 
 var (
-	UserExistError          = errors.New("user already exist")
-	UserNotExistError       = errors.New("user not exist")
-	AccountExistError       = errors.New("account already exist")
-	AccountNotExistError    = errors.New("account not exist")
-	GroupExistError         = errors.New("group already exist")
-	GroupNotExistError      = errors.New("group not exist")
-	UserJoinedGroupError    = errors.New("the user has already joined the group")
-	UserNotJoinedGroupError = errors.New("the user not joined the group")
-	PolicyExistError        = errors.New("policy already exist")
-	PolicyNotExistError     = errors.New("policy not exist")
-	KeyExistError           = errors.New("access key already exist")
-	KeyNotExistError        = errors.New("access key not exist")
+	UserExistError              = errors.New("user already exist")
+	UserNotExistError           = errors.New("user not exist")
+	AccountExistError           = errors.New("account already exist")
+	AccountNotExistError        = errors.New("account not exist")
+	GroupExistError             = errors.New("group already exist")
+	GroupNotExistError          = errors.New("group not exist")
+	UserJoinedGroupError        = errors.New("the user has already joined the group")
+	UserNotJoinedGroupError     = errors.New("the user not joined the group")
+	PolicyExistError            = errors.New("policy already exist")
+	PolicyNotExistError         = errors.New("policy not exist")
+	PolicyAttachedUserError     = errors.New("the policy has already attached to the user")
+	PolicyNotAttachedUserError  = errors.New("the policy not attached to the group")
+	PolicyAttachedGroupError    = errors.New("the policy has already attached to the group")
+	PolicyNotAttachedGroupError = errors.New("the policy not attached to the user")
+	KeyExistError               = errors.New("access key already exist")
+	KeyNotExistError            = errors.New("access key not exist")
 )
 
 type AccountService interface {
@@ -55,9 +59,27 @@ type GroupUserService interface {
 	UserJoinedGroupsNum(userId string) (int, error)
 }
 
+type PolicyUserService interface {
+	UserAttachPolicy(bean *PolicyUserBean) (*PolicyUserBean, error)
+	UserDetachPolicy(bean *PolicyUserBean) error
+	// 	GroupRemoveUser(bean *GroupUserBean) error
+	ListUserPolicy(userId string, beans *[]*PolicyUserBean) error
+	ListPolicyUser(policyId string, beans *[]*PolicyUserBean) error
+	UserAttachedPolicyNum(userId string) (int, error)
+}
+
+type PolicyGroupService interface {
+	GroupAttachPolicy(bean *PolicyGroupBean) (*PolicyGroupBean, error)
+	GroupDetachPolicy(bean *PolicyGroupBean) error
+	ListGroupPolicy(groupId string, beans *[]*PolicyGroupBean) error
+	ListPolicyGroup(policyId string, beans *[]*PolicyGroupBean) error
+	GroupAttachedPolicyNum(groupId string) (int, error)
+}
+
 type PolicyService interface {
 	CreatePolicy(policy *PolicyBean) (*PolicyBean, error)
 	GetPolicy(account, policy string, bean *PolicyBean) error
+	GetPolicyById(policyId string, policy *PolicyBean) error
 	DeletePolicy(account, policy string) error
 	UpdatePolicy(account, policy string, bean *PolicyBean) error
 	ListPolicy(account, marker string, ptype, max int, groups *[]*PolicyBean) error
@@ -79,5 +101,7 @@ type Service interface {
 	GroupService
 	GroupUserService
 	PolicyService
+	PolicyUserService
+	PolicyGroupService
 	KeyService
 }

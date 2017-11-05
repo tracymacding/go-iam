@@ -20,6 +20,10 @@ func (ms *mysqlService) GetPolicy(account, policy string, bean *db.PolicyBean) e
 	return nil
 }
 
+func (ms *mysqlService) GetPolicyById(policyId string, bean *db.PolicyBean) error {
+	return nil
+}
+
 func (ms *mysqlService) UpdatePolicy(account, policy string, bean *db.PolicyBean) error {
 	return nil
 }

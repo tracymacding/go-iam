@@ -51,6 +51,20 @@ type PolicyBean struct {
 	UpdateDate  string        `bson:"update_date"`
 }
 
+type PolicyUserBean struct {
+	AttachId   bson.ObjectId `bson:"_id"`
+	PolicyId   string        `bson:"policy"`
+	UserId     string        `bson:"user"`
+	AttachDate string        `bson:"attach_date"`
+}
+
+type PolicyGroupBean struct {
+	AttachId   bson.ObjectId `bson:"_id"`
+	PolicyId   string        `bson:"policy"`
+	GroupId    string        `bson:"group"`
+	AttachDate string        `bson:"attach_date"`
+}
+
 type KeyBean struct {
 	AccessKeyId     bson.ObjectId `bson:"_id"`
 	AccessKeySecret string        `bson:"secret"`
