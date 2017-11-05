@@ -32,6 +32,13 @@ type GroupBean struct {
 	CreateDate string        `bson:"create_date"`
 }
 
+type GroupUserBean struct {
+	JoinId   bson.ObjectId `bson:"_id"`
+	GroupId  string        `bson:"group"`
+	UserId   string        `bson:"user"`
+	JoinDate string        `bson:"join_date"`
+}
+
 type PolicyBean struct {
 	PolicyId    bson.ObjectId `bson:"_id"`
 	PolicyName  string        `bson:"name"`

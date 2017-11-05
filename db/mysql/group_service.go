@@ -20,6 +20,10 @@ func (ms *mysqlService) GetGroup(account, group string, grp *db.GroupBean) error
 	return nil
 }
 
+func (ms *mysqlService) GetGroupById(groupId string, grp *db.GroupBean) error {
+	return nil
+}
+
 func (ms *mysqlService) UpdateGroup(account, group string, grp *db.GroupBean) error {
 	return nil
 }

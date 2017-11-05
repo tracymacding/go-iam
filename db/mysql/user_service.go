@@ -16,6 +16,10 @@ func (ms *mysqlService) GetIamUser(account, user string, usr *db.UserBean) error
 	return nil
 }
 
+func (ms *mysqlService) GetIamUserById(userId string, usr *db.UserBean) error {
+	return nil
+}
+
 func (ms *mysqlService) DeleteIamUser(account, user string) error {
 	return nil
 }

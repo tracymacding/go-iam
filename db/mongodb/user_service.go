@@ -47,6 +47,26 @@ func (ms *mongoService) GetIamUser(account, user string, usr *db.UserBean) error
 	return nil
 }
 
+func (ms *mongoService) GetIamUserById(userId string, usr *db.UserBean) error {
+	session, err := mgo.Dial(ms.servers)
+	if err != nil {
+		return err
+	}
+
+	defer session.Close()
+	session.SetMode(mgo.Monotonic, true)
+
+	c := session.DB("go_iam").C("user")
+	err = c.FindId(userId).One(usr)
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			return db.UserNotExistError
+		}
+		return err
+	}
+	return nil
+}
+
 func (ms *mongoService) DeleteIamUser(account, user string) error {
 	session, err := mgo.Dial(ms.servers)
 	if err != nil {

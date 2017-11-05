@@ -62,6 +62,43 @@ func (mgd *MongoDriver) Open(args ...interface{}) (db.Service, error) {
 		return nil, err
 	}
 
+	c = session.DB("go_iam").C("group_user")
+	index = mgo.Index{
+		Key:        []string{"group", "user"},
+		Unique:     true,
+		DropDups:   true,
+		Background: true,
+		Sparse:     true,
+	}
+	err = c.EnsureIndex(index)
+	if err != nil {
+		return nil, err
+	}
+	c = session.DB("go_iam").C("group_user")
+	index = mgo.Index{
+		Key:        []string{"user"},
+		Unique:     false,
+		DropDups:   true,
+		Background: true,
+		Sparse:     true,
+	}
+	err = c.EnsureIndex(index)
+	if err != nil {
+		return nil, err
+	}
+	c = session.DB("go_iam").C("group_user")
+	index = mgo.Index{
+		Key:        []string{"group"},
+		Unique:     false,
+		DropDups:   true,
+		Background: true,
+		Sparse:     true,
+	}
+	err = c.EnsureIndex(index)
+	if err != nil {
+		return nil, err
+	}
+
 	c = session.DB("go_iam").C("policy")
 	index = mgo.Index{
 		Key:        []string{"account", "name", "type"},

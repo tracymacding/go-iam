@@ -42,6 +42,11 @@ func setupRouter() *mux.Router {
 	router.HandleFunc("/", group.UpdateGroupHandler).Methods("GET").Queries("Action", "UpdateGroup")
 	router.HandleFunc("/", group.ListGroupHandler).Methods("GET").Queries("Action", "ListGroup")
 
+	router.HandleFunc("/", group.GroupAddUserHandler).Methods("GET").Queries("Action", "AddUserToGroup")
+	router.HandleFunc("/", group.GroupRemoveUserHandler).Methods("GET").Queries("Action", "RemoveUserFromGroup")
+	router.HandleFunc("/", group.ListUserGroupHandler).Methods("GET").Queries("Action", "ListGroupsForUser")
+	router.HandleFunc("/", group.ListGroupUserHandler).Methods("GET").Queries("Action", "ListUsersForGroup")
+
 	router.HandleFunc("/", policy.CreatePolicyHandler).Methods("GET").Queries("Action", "CreatePolicy")
 	router.HandleFunc("/", policy.GetPolicyHandler).Methods("GET").Queries("Action", "GetPolicy")
 	router.HandleFunc("/", policy.DeletePolicyHandler).Methods("GET").Queries("Action", "DeletePolicy")

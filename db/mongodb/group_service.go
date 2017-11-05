@@ -47,6 +47,26 @@ func (ms *mongoService) GetGroup(account, group string, grp *db.GroupBean) error
 	return nil
 }
 
+func (ms *mongoService) GetGroupById(groupId string, grp *db.GroupBean) error {
+	session, err := mgo.Dial(ms.servers)
+	if err != nil {
+		return err
+	}
+
+	defer session.Close()
+	session.SetMode(mgo.Monotonic, true)
+
+	c := session.DB("go_iam").C("group")
+	err = c.FindId(groupId).One(grp)
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			return db.GroupNotExistError
+		}
+		return err
+	}
+	return nil
+}
+
 func (ms *mongoService) DeleteGroup(account, group string) error {
 	session, err := mgo.Dial(ms.servers)
 	if err != nil {
