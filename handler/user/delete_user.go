@@ -39,7 +39,8 @@ func (dua *DeleteUserApi) Auth() {
 func (dua *DeleteUserApi) Response() {
 	json := simplejson.New()
 	if dua.err != nil {
-		context.Set(dua.req, "request_error", gerror.NewIAMError(dua.status, dua.err))
+		gerr := gerror.NewIAMError(dua.status, dua.err)
+		context.Set(dua.req, "request_error", gerr)
 		json.Set("ErrorMessage", dua.err.Error())
 	}
 	json.Set("RequestId", context.Get(dua.req, "request_id"))
@@ -60,14 +61,15 @@ func (dua *DeleteUserApi) deleteUser() {
 
 func DeleteIAMUserHandler(w http.ResponseWriter, r *http.Request) {
 	dua := DeleteUserApi{req: r, status: http.StatusOK}
-
 	defer dua.Response()
 
 	if dua.Auth(); dua.err != nil {
 		return
 	}
 
-	dua.Parse()
+	if dua.Parse(); dua.err != nil {
+		return
+	}
 
 	if dua.Validate(); dua.err != nil {
 		return

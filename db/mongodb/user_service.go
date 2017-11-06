@@ -6,10 +6,10 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-func (ms *mongoService) CreateIamUser(usr *db.UserBean) (*db.UserBean, error) {
+func (ms *mongoService) CreateIamUser(usr *db.UserBean) error {
 	session, err := mgo.Dial(ms.servers)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	defer session.Close()
@@ -20,11 +20,11 @@ func (ms *mongoService) CreateIamUser(usr *db.UserBean) (*db.UserBean, error) {
 	err = c.Insert(usr)
 	if err != nil {
 		if mgo.IsDup(err) {
-			return nil, db.UserExistError
+			return db.UserExistError
 		}
-		return nil, err
+		return err
 	}
-	return usr, nil
+	return nil
 }
 
 func (ms *mongoService) GetIamUser(account, user string, usr *db.UserBean) error {
@@ -131,10 +131,14 @@ func (ms *mongoService) ListIamUser(account, marker string, max int, usrs *[]*db
 		}
 		iter := query.Iter()
 
-		var user db.UserBean
-		for iter.Next(&user) {
-			*usrs = append(*usrs, &user)
-			marker = user.UserName
+		for {
+			var user db.UserBean
+			if iter.Next(&user) {
+				*usrs = append(*usrs, &user)
+				marker = user.UserName
+			} else {
+				break
+			}
 		}
 	}
 	return nil

@@ -53,15 +53,7 @@ func (uua *UpdateUserApi) Auth() {
 }
 
 func (uua *UpdateUserApi) updateUser() {
-	bean := db.UserBean{
-		UserName:    uua.user.userName,
-		DisplayName: uua.user.displayName,
-		Phone:       uua.user.phone,
-		Email:       uua.user.email,
-		Comments:    uua.user.comments,
-		Password:    uua.user.password,
-		CreateDate:  uua.user.createDate,
-	}
+	bean := uua.user.ToBean()
 	if uua.newUser != "" {
 		bean.UserName = uua.newUser
 	}
@@ -83,7 +75,8 @@ func (uua *UpdateUserApi) Response() {
 		json.Set("User", j)
 	} else {
 		json.Set("ErrorMessage", uua.err.Error())
-		context.Set(uua.req, "request_error", gerror.NewIAMError(uua.status, uua.err))
+		gerr := gerror.NewIAMError(uua.status, uua.err)
+		context.Set(uua.req, "request_error", gerr)
 	}
 	json.Set("RequestId", context.Get(uua.req, "request_id"))
 	data, _ := json.Encode()
@@ -98,7 +91,9 @@ func UpdateIAMUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uua.Parse()
+	if uua.Parse(); uua.err != nil {
+		return
+	}
 
 	if uua.Validate(); uua.err != nil {
 		return

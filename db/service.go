@@ -32,7 +32,7 @@ type AccountService interface {
 }
 
 type UserService interface {
-	CreateIamUser(usr *UserBean) (*UserBean, error)
+	CreateIamUser(usr *UserBean) error
 	GetIamUser(account, user string, usr *UserBean) error
 	GetIamUserById(userId string, usr *UserBean) error
 	DeleteIamUser(account, user string) error

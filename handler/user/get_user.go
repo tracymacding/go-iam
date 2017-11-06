@@ -42,7 +42,8 @@ func (gua *GetUserApi) Response() {
 		j := gua.user.Json()
 		json.Set("User", j)
 	} else {
-		context.Set(gua.req, "request_error", gerror.NewIAMError(gua.status, gua.err))
+		gerr := gerror.NewIAMError(gua.status, gua.err)
+		context.Set(gua.req, "request_error", gerr)
 		json.Set("ErrorMessage", gua.err.Error())
 	}
 	json.Set("RequestId", context.Get(gua.req, "request_id"))
@@ -62,14 +63,7 @@ func (gua *GetUserApi) getUser() {
 		}
 		return
 	}
-
-	gua.user.userId = bean.UserId.Hex()
-	gua.user.displayName = bean.DisplayName
-	gua.user.phone = bean.Phone
-	gua.user.email = bean.Email
-	gua.user.comments = bean.Comments
-	gua.user.createDate = bean.CreateDate
-	gua.user.password = bean.Password
+	gua.user = FromBean(&bean)
 }
 
 func GetIAMUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -81,7 +75,9 @@ func GetIAMUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	gua.Parse()
+	if gua.Parse(); gua.err != nil {
+		return
+	}
 
 	if gua.Validate(); gua.err != nil {
 		return

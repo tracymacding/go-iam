@@ -28,8 +28,9 @@ func (lua *ListUserApi) Parse() {
 
 	if items == "" {
 		lua.maxItems = 100
+	} else {
+		lua.maxItems, lua.err = strconv.Atoi(items)
 	}
-	lua.maxItems, lua.err = strconv.Atoi(items)
 }
 
 var (
@@ -62,7 +63,8 @@ func (lua *ListUserApi) Response() {
 		json.Set("Users", jsons)
 	} else {
 		json.Set("ErrorMessage", lua.err.Error())
-		context.Set(lua.req, "request_error", gerror.NewIAMError(lua.status, lua.err))
+		gerr := gerror.NewIAMError(lua.status, lua.err)
+		context.Set(lua.req, "request_error", gerr)
 	}
 	json.Set("RequestId", context.Get(lua.req, "request_id"))
 	data, _ := json.Encode()
@@ -83,23 +85,13 @@ func (lua *ListUserApi) listUser() {
 	}
 
 	for _, bean := range beans {
-		usr := &User{
-			userId:      bean.UserId.Hex(),
-			userName:    bean.UserName,
-			displayName: bean.DisplayName,
-			phone:       bean.Phone,
-			email:       bean.Email,
-			comments:    bean.Comments,
-			password:    bean.Password,
-			createDate:  bean.CreateDate,
-		}
-		lua.users = append(lua.users, usr)
+		usr := FromBean(bean)
+		lua.users = append(lua.users, &usr)
 	}
 }
 
 func ListIAMUserHandler(w http.ResponseWriter, r *http.Request) {
 	lua := ListUserApi{req: r, status: http.StatusOK}
-
 	defer lua.Response()
 
 	if lua.Auth(); lua.err != nil {

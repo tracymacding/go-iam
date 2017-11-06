@@ -35,6 +35,10 @@ func (caa *CreateIAMUserApi) Validate() {
 		caa.status = http.StatusBadRequest
 		return
 	}
+	if caa.err = caa.user.validate(); caa.err != nil {
+		caa.status = http.StatusBadRequest
+		return
+	}
 }
 
 func (caa *CreateIAMUserApi) Parse() {
@@ -43,7 +47,7 @@ func (caa *CreateIAMUserApi) Parse() {
 	caa.user.displayName = params["DisplayName"]
 	caa.user.phone = params["MobilePhone"]
 	caa.user.email = params["Email"]
-	caa.user.comments = params["Comment"]
+	caa.user.comments = params["Comments"]
 	caa.user.password = params["Password"]
 }
 
@@ -60,7 +64,8 @@ func (caa *CreateIAMUserApi) Response() {
 		j := caa.user.Json()
 		json.Set("User", j)
 	} else {
-		context.Set(caa.req, "request_error", gerror.NewIAMError(caa.status, caa.err))
+		gerr := gerror.NewIAMError(caa.status, caa.err)
+		context.Set(caa.req, "request_error", gerr)
 		json.Set("ErrorMessage", caa.err.Error())
 	}
 	json.Set("RequestId", context.Get(caa.req, "request_id"))
@@ -86,17 +91,9 @@ func (caa *CreateIAMUserApi) createIamUser() {
 		return
 	}
 
-	bean := &db.UserBean{
-		UserName:    caa.user.userName,
-		DisplayName: caa.user.displayName,
-		Phone:       caa.user.phone,
-		Email:       caa.user.email,
-		Comments:    caa.user.comments,
-		Password:    caa.user.password,
-		Account:     caa.user.account,
-		CreateDate:  time.Now().Format(time.RFC3339),
-	}
-	bean, caa.err = db.ActiveService().CreateIamUser(bean)
+	bean := caa.user.ToBean()
+	bean.CreateDate = time.Now().Format(time.RFC3339)
+	caa.err = db.ActiveService().CreateIamUser(&bean)
 	if caa.err != nil {
 		if caa.err == db.UserExistError {
 			caa.status = http.StatusConflict
@@ -117,7 +114,9 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	caa.Parse()
+	if caa.Parse(); caa.err != nil {
+		return
+	}
 
 	if caa.Validate(); caa.err != nil {
 		return
