@@ -39,7 +39,8 @@ func (daa *DeleteAccountApi) Auth() {
 func (daa *DeleteAccountApi) Response() {
 	json := simplejson.New()
 	if daa.err != nil {
-		context.Set(daa.req, "request_error", gerror.NewIAMError(daa.status, daa.err))
+		gerr := gerror.NewIAMError(daa.status, daa.err)
+		context.Set(daa.req, "request_error", gerr)
 		json.Set("ErrorMessage", daa.err.Error())
 	}
 	json.Set("RequestId", context.Get(daa.req, "request_id"))
@@ -60,14 +61,15 @@ func (daa *DeleteAccountApi) deleteAccount() {
 
 func DeleteAccountHandler(w http.ResponseWriter, r *http.Request) {
 	daa := DeleteAccountApi{req: r, status: http.StatusOK}
-
 	defer daa.Response()
 
 	if daa.Auth(); daa.err != nil {
 		return
 	}
 
-	daa.Parse()
+	if daa.Parse(); daa.err != nil {
+		return
+	}
 
 	if daa.Validate(); daa.err != nil {
 		return

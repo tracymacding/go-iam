@@ -47,7 +47,8 @@ func (gaa *GetAccountApi) Response() {
 		j := gaa.account.Json()
 		json.Set("Account", j)
 	} else {
-		context.Set(gaa.req, "request_error", gerror.NewIAMError(gaa.status, gaa.err))
+		gerr := gerror.NewIAMError(gaa.status, gaa.err)
+		context.Set(gaa.req, "request_error", gerr)
 		json.Set("ErrorMessage", gaa.err.Error())
 	}
 	json.Set("RequestId", context.Get(gaa.req, "request_id"))
@@ -57,7 +58,6 @@ func (gaa *GetAccountApi) Response() {
 
 func (gaa *GetAccountApi) getAccount() {
 	var bean db.AccountBean
-
 	gaa.err = db.ActiveService().GetAccount(gaa.account.accountId, &bean)
 	if gaa.err != nil {
 		if gaa.err == db.AccountNotExistError {
@@ -67,23 +67,20 @@ func (gaa *GetAccountApi) getAccount() {
 		}
 		return
 	}
-
-	gaa.account.accountName = bean.AccountName
-	gaa.account.accountType = AccountType(bean.AccountType)
-	gaa.account.password = bean.Password
-	gaa.account.createDate = bean.CreateDate
+	gaa.account = FromBean(&bean)
 }
 
 func GetAccountHandler(w http.ResponseWriter, r *http.Request) {
 	gaa := GetAccountApi{req: r, status: http.StatusOK}
-
 	defer gaa.Response()
 
 	if gaa.Auth(); gaa.err != nil {
 		return
 	}
 
-	gaa.Parse()
+	if gaa.Parse(); gaa.err != nil {
+		return
+	}
 
 	if gaa.Validate(); gaa.err != nil {
 		return

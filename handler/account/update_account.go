@@ -33,6 +33,16 @@ func (uaa *UpdateAccountApi) Validate() {
 		uaa.status = http.StatusBadRequest
 		return
 	}
+	if len(uaa.account.accountName) > 64 {
+		uaa.err = AccountNameTooLongError
+		uaa.status = http.StatusBadRequest
+		return
+	}
+	// if {
+	// 	uaa.err = AccountNameInvalidError
+	// 	uaa.status = http.StatusBadRequest
+	// 	return
+	// }
 }
 
 func (uaa *UpdateAccountApi) Auth() {
@@ -43,12 +53,24 @@ func (uaa *UpdateAccountApi) Auth() {
 }
 
 func (uaa *UpdateAccountApi) updateAccount() {
-	bean := db.AccountBean{
-		AccountName: uaa.account.accountName,
-		Password:    uaa.account.password,
-		AccountType: int(uaa.account.accountType),
-		CreateDate:  uaa.account.createDate,
+	gaa := GetAccountApi{}
+	gaa.account.accountId = uaa.account.accountId
+
+	if gaa.getAccount(); gaa.err != nil {
+		uaa.err = gaa.err
+		return
 	}
+
+	uaa.account.accountType = gaa.account.accountType
+	uaa.account.createDate = gaa.account.createDate
+	if uaa.account.accountName == "" {
+		uaa.account.accountName = gaa.account.accountName
+	}
+	if uaa.account.password == "" {
+		uaa.account.password = gaa.account.password
+	}
+
+	bean := uaa.account.ToBean()
 	uaa.err = db.ActiveService().UpdateAccount(uaa.account.accountId, &bean)
 	if uaa.err == db.AccountNotExistError {
 		uaa.status = http.StatusNotFound
@@ -75,35 +97,21 @@ func (uaa *UpdateAccountApi) Response() {
 
 func UpdateAccountHandler(w http.ResponseWriter, r *http.Request) {
 	uaa := UpdateAccountApi{req: r, status: http.StatusOK}
-
 	defer uaa.Response()
 
 	if uaa.Auth(); uaa.err != nil {
 		return
 	}
 
-	uaa.Parse()
+	if uaa.Parse(); uaa.err != nil {
+		return
+	}
 
 	if uaa.Validate(); uaa.err != nil {
 		return
 	}
 
-	gaa := GetAccountApi{}
-	gaa.account.accountId = uaa.account.accountId
-
-	if gaa.getAccount(); gaa.err != nil {
-		uaa.err = gaa.err
+	if uaa.updateAccount(); uaa.err != nil {
 		return
 	}
-
-	uaa.account.accountType = gaa.account.accountType
-	uaa.account.createDate = gaa.account.createDate
-	if uaa.account.accountName == "" {
-		uaa.account.accountName = gaa.account.accountName
-	}
-	if uaa.account.password == "" {
-		uaa.account.password = gaa.account.password
-	}
-
-	uaa.updateAccount()
 }

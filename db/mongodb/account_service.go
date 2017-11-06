@@ -6,10 +6,10 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-func (ms *mongoService) CreateAccount(account *db.AccountBean) (*db.AccountBean, error) {
+func (ms *mongoService) CreateAccount(account *db.AccountBean) error {
 	session, err := mgo.Dial(ms.servers)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	defer session.Close()
@@ -20,11 +20,11 @@ func (ms *mongoService) CreateAccount(account *db.AccountBean) (*db.AccountBean,
 	err = c.Insert(account)
 	if err != nil {
 		if mgo.IsDup(err) {
-			return nil, db.AccountExistError
+			return db.AccountExistError
 		}
-		return nil, err
+		return err
 	}
-	return account, nil
+	return nil
 }
 
 func (ms *mongoService) GetAccount(accountId string, account *db.AccountBean) error {

@@ -52,7 +52,8 @@ func (laa *LoginAccountApi) Response() {
 	json := simplejson.New()
 	if laa.err != nil {
 		json.Set("ErrorMessage", laa.err.Error())
-		context.Set(laa.req, "request_error", gerror.NewIAMError(laa.status, laa.err))
+		gerr := gerror.NewIAMError(laa.status, laa.err)
+		context.Set(laa.req, "request_error", gerr)
 	} else {
 		j := laa.account.Json()
 		json.Set("Account", j)
@@ -72,7 +73,9 @@ func LoginAccountHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	laa.Parse()
+	if laa.Parse(); laa.err != nil {
+		return
+	}
 
 	if laa.Validate(); laa.err != nil {
 		return

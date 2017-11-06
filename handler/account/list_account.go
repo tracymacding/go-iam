@@ -13,18 +13,20 @@ type ListAccountApi struct {
 	req      *http.Request
 	status   int
 	err      error
+	saccType string
 	accType  AccountType
 	accounts []*Account
 }
 
 func (lsaa *ListAccountApi) Parse() {
 	params := util.ParseParameters(lsaa.req)
-	lsaa.accType = ParseAccountType(params["AccountType"])
+	lsaa.saccType = params["AccountType"]
+	lsaa.accType = ParseAccountType(lsaa.saccType)
 }
 
 func (lsaa *ListAccountApi) Validate() {
-	if !IsValidType(lsaa.accType) {
-		lsaa.err = MissAccountIdError
+	if lsaa.saccType != "" && !IsValidType(lsaa.accType) {
+		lsaa.err = InvalidAccountTypeError
 		lsaa.status = http.StatusBadRequest
 		return
 	}
@@ -48,7 +50,8 @@ func (lsaa *ListAccountApi) Response() {
 		json.Set("Account", jsons)
 	} else {
 		json.Set("ErrorMessage", lsaa.err.Error())
-		context.Set(lsaa.req, "request_error", gerror.NewIAMError(lsaa.status, lsaa.err))
+		gerr := gerror.NewIAMError(lsaa.status, lsaa.err)
+		context.Set(lsaa.req, "request_error", gerr)
 	}
 	json.Set("RequestId", context.Get(lsaa.req, "request_id"))
 	data, _ := json.Encode()
@@ -68,26 +71,22 @@ func (lsaa *ListAccountApi) listAccount() {
 	}
 
 	for _, bean := range beans {
-		account := &Account{
-			accountId:   bean.AccountId.Hex(),
-			accountName: bean.AccountName,
-			accountType: AccountType(bean.AccountType),
-			createDate:  bean.CreateDate,
-		}
-		lsaa.accounts = append(lsaa.accounts, account)
+		account := FromBean(bean)
+		lsaa.accounts = append(lsaa.accounts, &account)
 	}
 }
 
 func ListAccountHandler(w http.ResponseWriter, r *http.Request) {
 	lsaa := ListAccountApi{req: r, status: http.StatusOK}
-
 	defer lsaa.Response()
 
 	if lsaa.Auth(); lsaa.err != nil {
 		return
 	}
 
-	lsaa.Parse()
+	if lsaa.Parse(); lsaa.err != nil {
+		return
+	}
 
 	if lsaa.Validate(); lsaa.err != nil {
 		return

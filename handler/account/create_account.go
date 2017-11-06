@@ -31,6 +31,7 @@ type CreateAccountApi struct {
 	req     *http.Request
 	status  int
 	err     error
+	accType string
 	account Account
 }
 
@@ -39,6 +40,8 @@ var (
 	MissPasswordError       = errors.New("password missing")
 	MissAccountTypeError    = errors.New("account type missing")
 	InvalidAccountTypeError = errors.New("invalid account type")
+	AccountNameTooLongError = errors.New("account name too long")
+	AccountNameInvalidError = errors.New("account name contains illegal char")
 )
 
 func (caa *CreateAccountApi) Validate() {
@@ -52,7 +55,7 @@ func (caa *CreateAccountApi) Validate() {
 		caa.status = http.StatusBadRequest
 		return
 	}
-	if caa.account.accountType == 0 {
+	if caa.accType == "" {
 		caa.err = MissAccountTypeError
 		caa.status = http.StatusBadRequest
 		return
@@ -62,13 +65,25 @@ func (caa *CreateAccountApi) Validate() {
 		caa.status = http.StatusBadRequest
 		return
 	}
+	// TODO: check account name
+	if len(caa.account.accountName) > 64 {
+		caa.err = AccountNameTooLongError
+		caa.status = http.StatusBadRequest
+		return
+	}
+	// if {
+	// 	caa.err = AccountNameInvalidError
+	// 	caa.status = http.StatusBadRequest
+	// 	return
+	// }
 }
 
 func (caa *CreateAccountApi) Parse() {
 	params := util.ParseParameters(caa.req)
 	caa.account.accountName = params["AccountName"]
 	caa.account.password = params["Password"]
-	caa.account.accountType = ParseAccountType(params["AccountType"])
+	caa.accType = params["AccountType"]
+	caa.account.accountType = ParseAccountType(caa.accType)
 }
 
 func (caa *CreateAccountApi) Auth() {
@@ -84,7 +99,8 @@ func (caa *CreateAccountApi) Response() {
 		j := caa.account.Json()
 		json.Set("Account", j)
 	} else {
-		context.Set(caa.req, "request_error", gerror.NewIAMError(caa.status, caa.err))
+		gerr := gerror.NewIAMError(caa.status, caa.err)
+		context.Set(caa.req, "request_error", gerr)
 		json.Set("ErrorMessage", caa.err.Error())
 	}
 	json.Set("RequestId", context.Get(caa.req, "request_id"))
@@ -93,13 +109,9 @@ func (caa *CreateAccountApi) Response() {
 }
 
 func (caa *CreateAccountApi) createAccount() {
-	bean := &db.AccountBean{
-		AccountName: caa.account.accountName,
-		Password:    caa.account.password,
-		AccountType: int(caa.account.accountType),
-		CreateDate:  time.Now().Format(time.RFC3339),
-	}
-	bean, caa.err = db.ActiveService().CreateAccount(bean)
+	bean := caa.account.ToBean()
+	bean.CreateDate = time.Now().Format(time.RFC3339)
+	caa.err = db.ActiveService().CreateAccount(&bean)
 	if caa.err != nil {
 		if caa.err == db.AccountExistError {
 			caa.status = http.StatusConflict
@@ -114,14 +126,15 @@ func (caa *CreateAccountApi) createAccount() {
 
 func CreateAccountHandler(w http.ResponseWriter, r *http.Request) {
 	caa := CreateAccountApi{req: r, status: http.StatusOK}
-
 	defer caa.Response()
 
 	if caa.Auth(); caa.err != nil {
 		return
 	}
 
-	caa.Parse()
+	if caa.Parse(); caa.err != nil {
+		return
+	}
 
 	if caa.Validate(); caa.err != nil {
 		return

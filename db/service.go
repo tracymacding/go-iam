@@ -24,7 +24,7 @@ var (
 )
 
 type AccountService interface {
-	CreateAccount(account *AccountBean) (*AccountBean, error)
+	CreateAccount(account *AccountBean) error
 	GetAccount(accountId string, account *AccountBean) error
 	DeleteAccount(accountId string) error
 	UpdateAccount(accountId string, account *AccountBean) error

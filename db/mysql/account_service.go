@@ -4,8 +4,8 @@ import (
 	"github.com/go-iam/db"
 )
 
-func (ms *mysqlService) CreateAccount(account *db.AccountBean) (*db.AccountBean, error) {
-	return nil, nil
+func (ms *mysqlService) CreateAccount(account *db.AccountBean) error {
+	return nil
 }
 
 func (ms *mysqlService) GetAccount(accountId string, account *db.AccountBean) error {
