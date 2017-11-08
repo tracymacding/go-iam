@@ -4,8 +4,8 @@ import (
 	"github.com/go-iam/db"
 )
 
-func (ms *mysqlService) CreatePolicy(policy *db.PolicyBean) (*db.PolicyBean, error) {
-	return nil, nil
+func (ms *mysqlService) CreatePolicy(policy *db.PolicyBean) error {
+	return nil
 }
 
 func (ms *mysqlService) PolicyCountOfAccount(accountId string) (int, error) {

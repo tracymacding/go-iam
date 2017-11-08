@@ -21,7 +21,7 @@ type CreatePolicyApi struct {
 var (
 	MissPolicyNameError     = errors.New("policy name missing")
 	MissPolicyDocumentError = errors.New("policy document missing")
-	TooManyPolicysError     = errors.New("The count of policy beyond the current limits")
+	TooManyPolicysError     = errors.New("the count of policy beyond the current limits")
 )
 
 func (cpa *CreatePolicyApi) Parse() {
@@ -29,6 +29,7 @@ func (cpa *CreatePolicyApi) Parse() {
 	cpa.policy.policyName = params["PolicyName"]
 	cpa.policy.document = params["PolicyDocument"]
 	cpa.policy.description = params["PolicyDescription"]
+	cpa.policy.policyType = PolicyCustom
 }
 
 func (cpa *CreatePolicyApi) Validate() {
@@ -37,13 +38,18 @@ func (cpa *CreatePolicyApi) Validate() {
 		cpa.status = http.StatusBadRequest
 		return
 	}
+
 	if cpa.policy.document == "" {
 		cpa.err = MissPolicyDocumentError
 		cpa.status = http.StatusBadRequest
 		return
 	}
 
-	// TODO: check document synax
+	if err := cpa.policy.validate(); err != nil {
+		cpa.err = err
+		cpa.status = http.StatusBadRequest
+		return
+	}
 }
 
 func (cpa *CreatePolicyApi) Auth() {
@@ -59,7 +65,8 @@ func (cpa *CreatePolicyApi) Response() {
 		j := cpa.policy.Json()
 		json.Set("Policy", j)
 	} else {
-		context.Set(cpa.req, "request_error", gerror.NewIAMError(cpa.status, cpa.err))
+		gerr := gerror.NewIAMError(cpa.status, cpa.err)
+		context.Set(cpa.req, "request_error", gerr)
 		json.Set("ErrorMessage", cpa.err.Error())
 	}
 	json.Set("RequestId", context.Get(cpa.req, "request_id"))
@@ -86,17 +93,10 @@ func (cpa *CreatePolicyApi) createPolicy() {
 	}
 
 	now := time.Now().Format(time.RFC3339)
-	bean := &db.PolicyBean{
-		PolicyName:  cpa.policy.policyName,
-		PolicyType:  cpa.policy.policyName,
-		Document:    cpa.policy.document,
-		Description: cpa.policy.description,
-		Version:     cpa.policy.version,
-		Account:     cpa.policy.account,
-		CreateDate:  now,
-		UpdateDate:  now,
-	}
-	bean, cpa.err = db.ActiveService().CreatePolicy(bean)
+	bean := cpa.policy.ToBean()
+	bean.CreateDate = now
+	bean.UpdateDate = now
+	cpa.err = db.ActiveService().CreatePolicy(&bean)
 	if cpa.err != nil {
 		if cpa.err == db.PolicyExistError {
 			cpa.status = http.StatusConflict

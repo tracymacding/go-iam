@@ -45,6 +45,16 @@ func (udpa *UserDetachPolicyApi) Validate() {
 		udpa.status = http.StatusBadRequest
 		return
 	}
+	if ok, err := user.IsUserNameValid(udpa.user); !ok {
+		udpa.err = err
+		udpa.status = http.StatusBadRequest
+		return
+	}
+	if ok, err := IsPolicyNameValid(udpa.policy); !ok {
+		udpa.err = err
+		udpa.status = http.StatusBadRequest
+		return
+	}
 }
 
 func (udpa *UserDetachPolicyApi) Auth() {
@@ -57,7 +67,8 @@ func (udpa *UserDetachPolicyApi) Auth() {
 func (udpa *UserDetachPolicyApi) Response() {
 	json := simplejson.New()
 	if udpa.err != nil {
-		context.Set(udpa.req, "request_error", gerror.NewIAMError(udpa.status, udpa.err))
+		gerr := gerror.NewIAMError(udpa.status, udpa.err)
+		context.Set(udpa.req, "request_error", gerr)
 		json.Set("ErrorMessage", udpa.err.Error())
 	}
 	json.Set("RequestId", context.Get(udpa.req, "request_id"))
@@ -66,6 +77,20 @@ func (udpa *UserDetachPolicyApi) Response() {
 }
 
 func (udpa *UserDetachPolicyApi) detachPolicyFromUser() {
+	userId, err := user.GetUserId(udpa.account, udpa.user)
+	if err != nil {
+		udpa.err = err
+		return
+	}
+	udpa.userId = userId
+
+	policyId, err := GetPolicyId(udpa.account, udpa.policy, udpa.policyType)
+	if err != nil {
+		udpa.err = err
+		return
+	}
+	udpa.policyId = policyId
+
 	bean := &db.PolicyUserBean{
 		PolicyId: udpa.policyId,
 		UserId:   udpa.userId,
@@ -96,20 +121,6 @@ func UserDetachPolicyHandler(w http.ResponseWriter, r *http.Request) {
 	if udpa.Validate(); udpa.err != nil {
 		return
 	}
-
-	userId, err := user.GetUserId(udpa.account, udpa.user)
-	if err != nil {
-		udpa.err = err
-		return
-	}
-	udpa.userId = userId
-
-	policyId, err := GetPolicyId(udpa.account, udpa.policy, udpa.policyType)
-	if err != nil {
-		udpa.err = err
-		return
-	}
-	udpa.policyId = policyId
 
 	if udpa.detachPolicyFromUser(); udpa.err != nil {
 		return

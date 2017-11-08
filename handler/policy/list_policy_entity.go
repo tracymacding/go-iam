@@ -50,7 +50,8 @@ func (lpea *ListPolicyEntityApi) Auth() {
 func (lpea *ListPolicyEntityApi) Response() {
 	json := simplejson.New()
 	if lpea.err != nil {
-		context.Set(lpea.req, "request_error", gerror.NewIAMError(lpea.status, lpea.err))
+		gerr := gerror.NewIAMError(lpea.status, lpea.err)
+		context.Set(lpea.req, "request_error", gerr)
 		json.Set("ErrorMessage", lpea.err.Error())
 	} else {
 		uJsons := make([]*simplejson.Json, 0)
@@ -73,6 +74,13 @@ func (lpea *ListPolicyEntityApi) Response() {
 }
 
 func (lpea *ListPolicyEntityApi) listPolicyEntity() {
+	policyId, err := GetPolicyId(lpea.account, lpea.policy, lpea.policyType)
+	if err != nil {
+		lpea.err = err
+		return
+	}
+	lpea.policyId = policyId
+
 	users := make([]*db.PolicyUserBean, 0)
 	lpea.err = db.ActiveService().ListPolicyUser(lpea.policyId, &users)
 	if lpea.err != nil {
@@ -128,13 +136,6 @@ func ListPolicyEntityHandler(w http.ResponseWriter, r *http.Request) {
 	if lpea.Validate(); lpea.err != nil {
 		return
 	}
-
-	policyId, err := GetPolicyId(lpea.account, lpea.policy, lpea.policyType)
-	if err != nil {
-		lpea.err = err
-		return
-	}
-	lpea.policyId = policyId
 
 	if lpea.listPolicyEntity(); lpea.err != nil {
 		return

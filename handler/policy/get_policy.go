@@ -42,7 +42,8 @@ func (gpa *GetPolicyApi) Response() {
 		j := gpa.policy.Json()
 		json.Set("User", j)
 	} else {
-		context.Set(gpa.req, "request_error", gerror.NewIAMError(gpa.status, gpa.err))
+		gerr := gerror.NewIAMError(gpa.status, gpa.err)
+		context.Set(gpa.req, "request_error", gerr)
 		json.Set("ErrorMessage", gpa.err.Error())
 	}
 	json.Set("RequestId", context.Get(gpa.req, "request_id"))
@@ -62,18 +63,11 @@ func (gpa *GetPolicyApi) getPolicy() {
 		}
 		return
 	}
-
-	gpa.policy.policyId = bean.PolicyId.Hex()
-	gpa.policy.document = bean.Document
-	gpa.policy.description = bean.Description
-	gpa.policy.version = bean.Version
-	gpa.policy.createDate = bean.CreateDate
-	gpa.policy.updateDate = bean.UpdateDate
+	gpa.policy = FromBean(&bean)
 }
 
 func GetPolicyHandler(w http.ResponseWriter, r *http.Request) {
 	gpa := GetPolicyApi{req: r, status: http.StatusOK}
-
 	defer gpa.Response()
 
 	if gpa.Auth(); gpa.err != nil {

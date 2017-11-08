@@ -54,8 +54,9 @@ func (upa *UpdatePolicyApi) Response() {
 		j := upa.policy.Json()
 		json.Set("Policy", j)
 	} else {
+		gerr := gerror.NewIAMError(upa.status, upa.err)
+		context.Set(upa.req, "request_error", gerr)
 		json.Set("ErrorMessage", upa.err.Error())
-		context.Set(upa.req, "request_error", gerror.NewIAMError(upa.status, upa.err))
 	}
 	json.Set("RequestId", context.Get(upa.req, "request_id"))
 	data, _ := json.Encode()
@@ -65,7 +66,7 @@ func (upa *UpdatePolicyApi) Response() {
 func (upa *UpdatePolicyApi) updatePolicy() {
 	bean := db.PolicyBean{
 		PolicyName:  upa.policy.policyName,
-		PolicyType:  upa.policy.policyType,
+		PolicyType:  int(upa.policy.policyType),
 		Account:     upa.policy.account,
 		Document:    upa.policy.document,
 		Description: upa.policy.description,

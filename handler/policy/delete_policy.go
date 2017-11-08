@@ -27,6 +27,12 @@ func (dpa *DeletePolicyApi) Validate() {
 		dpa.status = http.StatusBadRequest
 		return
 	}
+
+	if ok, err := IsPolicyNameValid(dpa.policy.policyName); !ok {
+		dpa.err = err
+		dpa.status = http.StatusBadRequest
+		return
+	}
 }
 
 func (dpa *DeletePolicyApi) Auth() {
@@ -39,7 +45,8 @@ func (dpa *DeletePolicyApi) Auth() {
 func (dpa *DeletePolicyApi) Response() {
 	json := simplejson.New()
 	if dpa.err != nil {
-		context.Set(dpa.req, "request_error", gerror.NewIAMError(dpa.status, dpa.err))
+		gerr := gerror.NewIAMError(dpa.status, dpa.err)
+		context.Set(dpa.req, "request_error", gerr)
 		json.Set("ErrorMessage", dpa.err.Error())
 	}
 	json.Set("RequestId", context.Get(dpa.req, "request_id"))
@@ -60,7 +67,6 @@ func (dpa *DeletePolicyApi) deletePolicy() {
 
 func DeletePolicyHandler(w http.ResponseWriter, r *http.Request) {
 	dpa := DeletePolicyApi{req: r, status: http.StatusOK}
-
 	defer dpa.Response()
 
 	if dpa.Auth(); dpa.err != nil {

@@ -47,6 +47,16 @@ func (gapa *GroupAttachPolicyApi) Validate() {
 		gapa.status = http.StatusBadRequest
 		return
 	}
+	if ok, err := group.IsGroupNameValid(gapa.group); !ok {
+		gapa.err = err
+		gapa.status = http.StatusBadRequest
+		return
+	}
+	if ok, err := IsPolicyNameValid(gapa.policy); !ok {
+		gapa.err = err
+		gapa.status = http.StatusBadRequest
+		return
+	}
 }
 
 func (gapa *GroupAttachPolicyApi) Auth() {
@@ -59,7 +69,8 @@ func (gapa *GroupAttachPolicyApi) Auth() {
 func (gapa *GroupAttachPolicyApi) Response() {
 	json := simplejson.New()
 	if gapa.err != nil {
-		context.Set(gapa.req, "request_error", gerror.NewIAMError(gapa.status, gapa.err))
+		gerr := gerror.NewIAMError(gapa.status, gapa.err)
+		context.Set(gapa.req, "request_error", gerr)
 		json.Set("ErrorMessage", gapa.err.Error())
 	}
 	json.Set("RequestId", context.Get(gapa.req, "request_id"))
@@ -76,6 +87,20 @@ var (
 )
 
 func (gapa *GroupAttachPolicyApi) attachPolicyToGroup() {
+	groupId, err := group.GetGroupId(gapa.account, gapa.group)
+	if err != nil {
+		gapa.err = err
+		return
+	}
+	gapa.groupId = groupId
+
+	policyId, err := GetPolicyId(gapa.account, gapa.policy, gapa.policyType)
+	if err != nil {
+		gapa.err = err
+		return
+	}
+	gapa.policyId = policyId
+
 	cnt := 0
 	cnt, gapa.err = db.ActiveService().GroupAttachedPolicyNum(gapa.groupId)
 	if gapa.err != nil {
@@ -120,20 +145,6 @@ func GroupAttachPolicyHandler(w http.ResponseWriter, r *http.Request) {
 	if gapa.Validate(); gapa.err != nil {
 		return
 	}
-
-	groupId, err := group.GetGroupId(gapa.account, gapa.group)
-	if err != nil {
-		gapa.err = err
-		return
-	}
-	gapa.groupId = groupId
-
-	policyId, err := GetPolicyId(gapa.account, gapa.policy, gapa.policyType)
-	if err != nil {
-		gapa.err = err
-		return
-	}
-	gapa.policyId = policyId
 
 	if gapa.attachPolicyToGroup(); gapa.err != nil {
 		return

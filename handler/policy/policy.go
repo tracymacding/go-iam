@@ -1,19 +1,49 @@
 package policy
 
 import (
+	"errors"
 	"github.com/bitly/go-simplejson"
+	"github.com/go-iam/db"
+	"regexp"
 )
 
 type Policy struct {
 	policyId    string
 	policyName  string
-	policyType  string
+	policyType  PolicyType
 	document    string
 	description string
 	version     string
 	createDate  string
 	updateDate  string
 	account     string
+}
+
+func (p *Policy) ToBean() db.PolicyBean {
+	return db.PolicyBean{
+		PolicyName:  p.policyName,
+		PolicyType:  int(p.policyType),
+		Document:    p.document,
+		Description: p.description,
+		Version:     p.version,
+		CreateDate:  p.createDate,
+		UpdateDate:  p.updateDate,
+		Account:     p.account,
+	}
+}
+
+func FromBean(bean *db.PolicyBean) Policy {
+	return Policy{
+		policyId:    bean.PolicyId.Hex(),
+		policyName:  bean.PolicyName,
+		policyType:  PolicyType(bean.PolicyType),
+		document:    bean.Document,
+		description: bean.Description,
+		version:     bean.Version,
+		createDate:  bean.CreateDate,
+		updateDate:  bean.UpdateDate,
+		account:     bean.Account,
+	}
 }
 
 func (policy *Policy) Json() *simplejson.Json {
@@ -26,6 +56,73 @@ func (policy *Policy) Json() *simplejson.Json {
 	j.Set("CreateDate", policy.createDate)
 	j.Set("UpdateDate", policy.createDate)
 	return j
+}
+
+var (
+	PolicyNameTooLongError     = errors.New("policy name beyond the length limit")
+	DescriptionTooLongError    = errors.New("description beyond the length limit")
+	PolicyDocumentTooLongError = errors.New("policy document beyond the length limit")
+	PolicyNameInvalidError     = errors.New("policy name contains invalid char")
+)
+
+const (
+	MaxPolicyNameLength     = 128
+	MaxDescriptionLength    = 1024
+	MaxPolicyDocumentLength = 128
+)
+
+func IsPolicyNameValid(policyName string) (bool, error) {
+	if len(policyName) > MaxPolicyNameLength {
+		return false, PolicyNameTooLongError
+	}
+
+	reg := `^[a-zA-Z0-9-]+$`
+	rgx := regexp.MustCompile(reg)
+	if !rgx.MatchString(policyName) {
+		return false, PolicyNameInvalidError
+	}
+
+	return true, nil
+}
+
+func IsPolicyDocumentValid(document string) (bool, error) {
+	if len(document) > MaxPolicyDocumentLength {
+		return false, PolicyDocumentTooLongError
+	}
+
+	// TODO
+	return true, nil
+}
+
+func IsDescriptionValid(description string) (bool, error) {
+	if description == "" {
+		return true, nil
+	}
+
+	if len(description) > MaxDescriptionLength {
+		return false, DescriptionTooLongError
+	}
+
+	return true, nil
+}
+
+func (policy *Policy) validate() error {
+	ok, err := IsPolicyNameValid(policy.policyName)
+	if !ok {
+		return err
+	}
+
+	ok, err = IsDescriptionValid(policy.description)
+	if !ok {
+		return err
+	}
+
+	ok, err = IsPolicyDocumentValid(policy.document)
+	if !ok {
+		return err
+	}
+
+	return nil
 }
 
 type UserPolicy struct {

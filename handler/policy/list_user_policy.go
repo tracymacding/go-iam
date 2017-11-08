@@ -31,6 +31,11 @@ func (luga *ListUserPolicyApi) Validate() {
 		luga.status = http.StatusBadRequest
 		return
 	}
+	if ok, err := user.IsUserNameValid(luga.user); !ok {
+		luga.err = err
+		luga.status = http.StatusBadRequest
+		return
+	}
 }
 
 func (luga *ListUserPolicyApi) Auth() {
@@ -43,7 +48,8 @@ func (luga *ListUserPolicyApi) Auth() {
 func (luga *ListUserPolicyApi) Response() {
 	json := simplejson.New()
 	if luga.err != nil {
-		context.Set(luga.req, "request_error", gerror.NewIAMError(luga.status, luga.err))
+		gerr := gerror.NewIAMError(luga.status, luga.err)
+		context.Set(luga.req, "request_error", gerr)
 		json.Set("ErrorMessage", luga.err.Error())
 	} else {
 		jsons := make([]*simplejson.Json, 0)
@@ -60,6 +66,13 @@ func (luga *ListUserPolicyApi) Response() {
 }
 
 func (luga *ListUserPolicyApi) listUserPolicy() {
+	userId, err := user.GetUserId(luga.account, luga.user)
+	if err != nil {
+		luga.err = err
+		return
+	}
+	luga.userId = userId
+
 	beans := make([]*db.PolicyUserBean, 0)
 	luga.err = db.ActiveService().ListUserPolicy(luga.userId, &beans)
 	if luga.err != nil {
@@ -74,7 +87,7 @@ func (luga *ListUserPolicyApi) listUserPolicy() {
 		}
 		up := &UserPolicy{
 			policyName:  policy.PolicyName,
-			policyType:  policy.PolicyType,
+			policyType:  PolicyType(policy.PolicyType).String(),
 			description: policy.Description,
 			version:     policy.Version,
 			attachDate:  bean.AttachDate,
@@ -98,13 +111,6 @@ func ListUserPolicyHandler(w http.ResponseWriter, r *http.Request) {
 	if luga.Validate(); luga.err != nil {
 		return
 	}
-
-	userId, err := user.GetUserId(luga.account, luga.user)
-	if err != nil {
-		luga.err = err
-		return
-	}
-	luga.userId = userId
 
 	if luga.listUserPolicy(); luga.err != nil {
 		return

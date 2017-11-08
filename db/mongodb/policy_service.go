@@ -6,10 +6,10 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-func (ms *mongoService) CreatePolicy(policy *db.PolicyBean) (*db.PolicyBean, error) {
+func (ms *mongoService) CreatePolicy(policy *db.PolicyBean) error {
 	session, err := mgo.Dial(ms.servers)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	defer session.Close()
@@ -20,11 +20,11 @@ func (ms *mongoService) CreatePolicy(policy *db.PolicyBean) (*db.PolicyBean, err
 	err = c.Insert(policy)
 	if err != nil {
 		if mgo.IsDup(err) {
-			return nil, db.PolicyExistError
+			return db.PolicyExistError
 		}
-		return nil, err
+		return err
 	}
-	return policy, nil
+	return nil
 }
 
 func (ms *mongoService) GetPolicy(account, policy string, bean *db.PolicyBean) error {

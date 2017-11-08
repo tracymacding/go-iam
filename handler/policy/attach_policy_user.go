@@ -51,6 +51,16 @@ func (uapa *UserAttachPolicyApi) Validate() {
 		uapa.status = http.StatusBadRequest
 		return
 	}
+	if ok, err := user.IsUserNameValid(uapa.user); !ok {
+		uapa.err = err
+		uapa.status = http.StatusBadRequest
+		return
+	}
+	if ok, err := IsPolicyNameValid(uapa.policy); !ok {
+		uapa.err = err
+		uapa.status = http.StatusBadRequest
+		return
+	}
 }
 
 func (uapa *UserAttachPolicyApi) Auth() {
@@ -63,7 +73,8 @@ func (uapa *UserAttachPolicyApi) Auth() {
 func (uapa *UserAttachPolicyApi) Response() {
 	json := simplejson.New()
 	if uapa.err != nil {
-		context.Set(uapa.req, "request_error", gerror.NewIAMError(uapa.status, uapa.err))
+		gerr := gerror.NewIAMError(uapa.status, uapa.err)
+		context.Set(uapa.req, "request_error", gerr)
 		json.Set("ErrorMessage", uapa.err.Error())
 	}
 	json.Set("RequestId", context.Get(uapa.req, "request_id"))
@@ -80,6 +91,20 @@ var (
 )
 
 func (uapa *UserAttachPolicyApi) attachPolicyToUser() {
+	userId, err := user.GetUserId(uapa.account, uapa.user)
+	if err != nil {
+		uapa.err = err
+		return
+	}
+	uapa.userId = userId
+
+	policyId, err := GetPolicyId(uapa.account, uapa.policy, uapa.policyType)
+	if err != nil {
+		uapa.err = err
+		return
+	}
+	uapa.policyId = policyId
+
 	cnt := 0
 	cnt, uapa.err = db.ActiveService().UserAttachedPolicyNum(uapa.userId)
 	if uapa.err != nil {
@@ -124,20 +149,6 @@ func UserAttachPolicyHandler(w http.ResponseWriter, r *http.Request) {
 	if uapa.Validate(); uapa.err != nil {
 		return
 	}
-
-	userId, err := user.GetUserId(uapa.account, uapa.user)
-	if err != nil {
-		uapa.err = err
-		return
-	}
-	uapa.userId = userId
-
-	policyId, err := GetPolicyId(uapa.account, uapa.policy, uapa.policyType)
-	if err != nil {
-		uapa.err = err
-		return
-	}
-	uapa.policyId = policyId
 
 	if uapa.attachPolicyToUser(); uapa.err != nil {
 		return

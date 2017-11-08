@@ -31,6 +31,11 @@ func (luga *ListGroupPolicyApi) Validate() {
 		luga.status = http.StatusBadRequest
 		return
 	}
+	if ok, err := group.IsGroupNameValid(luga.group); !ok {
+		luga.err = err
+		luga.status = http.StatusBadRequest
+		return
+	}
 }
 
 func (luga *ListGroupPolicyApi) Auth() {
@@ -43,7 +48,8 @@ func (luga *ListGroupPolicyApi) Auth() {
 func (luga *ListGroupPolicyApi) Response() {
 	json := simplejson.New()
 	if luga.err != nil {
-		context.Set(luga.req, "request_error", gerror.NewIAMError(luga.status, luga.err))
+		gerr := gerror.NewIAMError(luga.status, luga.err)
+		context.Set(luga.req, "request_error", gerr)
 		json.Set("ErrorMessage", luga.err.Error())
 	} else {
 		jsons := make([]*simplejson.Json, 0)
@@ -74,7 +80,7 @@ func (luga *ListGroupPolicyApi) listGroupPolicy() {
 		}
 		up := &GroupPolicy{
 			policyName:  policy.PolicyName,
-			policyType:  policy.PolicyType,
+			policyType:  PolicyType(policy.PolicyType).String(),
 			description: policy.Description,
 			version:     policy.Version,
 			attachDate:  bean.AttachDate,

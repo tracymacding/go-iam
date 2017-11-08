@@ -62,7 +62,6 @@ type GroupUserService interface {
 type PolicyUserService interface {
 	UserAttachPolicy(bean *PolicyUserBean) (*PolicyUserBean, error)
 	UserDetachPolicy(bean *PolicyUserBean) error
-	// 	GroupRemoveUser(bean *GroupUserBean) error
 	ListUserPolicy(userId string, beans *[]*PolicyUserBean) error
 	ListPolicyUser(policyId string, beans *[]*PolicyUserBean) error
 	UserAttachedPolicyNum(userId string) (int, error)
@@ -77,7 +76,7 @@ type PolicyGroupService interface {
 }
 
 type PolicyService interface {
-	CreatePolicy(policy *PolicyBean) (*PolicyBean, error)
+	CreatePolicy(policy *PolicyBean) error
 	GetPolicy(account, policy string, bean *PolicyBean) error
 	GetPolicyById(policyId string, policy *PolicyBean) error
 	DeletePolicy(account, policy string) error

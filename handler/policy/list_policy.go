@@ -96,7 +96,7 @@ func (lpa *ListPolicyApi) listPolicy() {
 		policy := &Policy{
 			policyId:    bean.PolicyId.Hex(),
 			policyName:  bean.PolicyName,
-			policyType:  bean.PolicyType,
+			policyType:  PolicyType(bean.PolicyType),
 			document:    bean.Document,
 			description: bean.Description,
 			version:     bean.Version,

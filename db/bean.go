@@ -42,7 +42,7 @@ type GroupUserBean struct {
 type PolicyBean struct {
 	PolicyId    bson.ObjectId `bson:"_id"`
 	PolicyName  string        `bson:"name"`
-	PolicyType  string        `bson:"type"`
+	PolicyType  int           `bson:"type"`
 	Document    string        `bson:"document"`
 	Description string        `bson:"description"`
 	Version     string        `bson:"version"`

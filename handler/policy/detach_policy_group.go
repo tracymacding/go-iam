@@ -45,6 +45,16 @@ func (udpa *GroupDetachPolicyApi) Validate() {
 		udpa.status = http.StatusBadRequest
 		return
 	}
+	if ok, err := group.IsGroupNameValid(udpa.group); !ok {
+		udpa.err = err
+		udpa.status = http.StatusBadRequest
+		return
+	}
+	if ok, err := IsPolicyNameValid(udpa.policy); !ok {
+		udpa.err = err
+		udpa.status = http.StatusBadRequest
+		return
+	}
 }
 
 func (udpa *GroupDetachPolicyApi) Auth() {
@@ -66,6 +76,20 @@ func (udpa *GroupDetachPolicyApi) Response() {
 }
 
 func (udpa *GroupDetachPolicyApi) detachPolicyFromGroup() {
+	groupId, err := group.GetGroupId(udpa.account, udpa.group)
+	if err != nil {
+		udpa.err = err
+		return
+	}
+	udpa.groupId = groupId
+
+	policyId, err := GetPolicyId(udpa.account, udpa.policy, udpa.policyType)
+	if err != nil {
+		udpa.err = err
+		return
+	}
+	udpa.policyId = policyId
+
 	bean := &db.PolicyGroupBean{
 		PolicyId: udpa.policyId,
 		GroupId:  udpa.groupId,
@@ -96,20 +120,6 @@ func GroupDetachPolicyHandler(w http.ResponseWriter, r *http.Request) {
 	if udpa.Validate(); udpa.err != nil {
 		return
 	}
-
-	groupId, err := group.GetGroupId(udpa.account, udpa.group)
-	if err != nil {
-		udpa.err = err
-		return
-	}
-	udpa.groupId = groupId
-
-	policyId, err := GetPolicyId(udpa.account, udpa.policy, udpa.policyType)
-	if err != nil {
-		udpa.err = err
-		return
-	}
-	udpa.policyId = policyId
 
 	if udpa.detachPolicyFromGroup(); udpa.err != nil {
 		return
