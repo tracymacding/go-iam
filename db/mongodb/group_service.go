@@ -6,10 +6,10 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-func (ms *mongoService) CreateGroup(group *db.GroupBean) (*db.GroupBean, error) {
+func (ms *mongoService) CreateGroup(group *db.GroupBean) error {
 	session, err := mgo.Dial(ms.servers)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	defer session.Close()
@@ -20,11 +20,11 @@ func (ms *mongoService) CreateGroup(group *db.GroupBean) (*db.GroupBean, error) 
 	err = c.Insert(group)
 	if err != nil {
 		if mgo.IsDup(err) {
-			return nil, db.GroupExistError
+			return db.GroupExistError
 		}
-		return nil, err
+		return err
 	}
-	return group, nil
+	return nil
 }
 
 func (ms *mongoService) GetGroup(account, group string, grp *db.GroupBean) error {

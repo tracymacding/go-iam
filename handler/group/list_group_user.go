@@ -30,6 +30,11 @@ func (lgua *ListGroupUserApi) Validate() {
 		lgua.status = http.StatusBadRequest
 		return
 	}
+	if ok, err := IsGroupNameValid(lgua.group); !ok {
+		lgua.err = err
+		lgua.status = http.StatusBadRequest
+		return
+	}
 }
 
 func (lgua *ListGroupUserApi) Auth() {

@@ -27,6 +27,11 @@ func (dga *DeleteGroupApi) Validate() {
 		dga.status = http.StatusBadRequest
 		return
 	}
+	if ok, err := IsGroupNameValid(dga.group.groupName); !ok {
+		dga.err = err
+		dga.status = http.StatusBadRequest
+		return
+	}
 }
 
 func (dga *DeleteGroupApi) Auth() {
@@ -39,7 +44,8 @@ func (dga *DeleteGroupApi) Auth() {
 func (dga *DeleteGroupApi) Response() {
 	json := simplejson.New()
 	if dga.err != nil {
-		context.Set(dga.req, "request_error", gerror.NewIAMError(dga.status, dga.err))
+		gerr := gerror.NewIAMError(dga.status, dga.err)
+		context.Set(dga.req, "request_error", gerr)
 		json.Set("ErrorMessage", dga.err.Error())
 	}
 	json.Set("RequestId", context.Get(dga.req, "request_id"))
@@ -60,7 +66,6 @@ func (dga *DeleteGroupApi) deleteGroup() {
 
 func DeleteGroupHandler(w http.ResponseWriter, r *http.Request) {
 	dga := DeleteGroupApi{req: r, status: http.StatusOK}
-
 	defer dga.Response()
 
 	if dga.Auth(); dga.err != nil {

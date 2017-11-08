@@ -35,6 +35,10 @@ func (cga *CreateGroupApi) Validate() {
 		cga.status = http.StatusBadRequest
 		return
 	}
+	if cga.err = cga.group.validate(); cga.err != nil {
+		cga.status = http.StatusBadRequest
+		return
+	}
 }
 
 func (cga *CreateGroupApi) Auth() {
@@ -50,7 +54,8 @@ func (cga *CreateGroupApi) Response() {
 		j := cga.group.Json()
 		json.Set("Group", j)
 	} else {
-		context.Set(cga.req, "request_error", gerror.NewIAMError(cga.status, cga.err))
+		gerr := gerror.NewIAMError(cga.status, cga.err)
+		context.Set(cga.req, "request_error", gerr)
 		json.Set("ErrorMessage", cga.err.Error())
 	}
 	json.Set("RequestId", context.Get(cga.req, "request_id"))
@@ -76,13 +81,9 @@ func (cga *CreateGroupApi) createGroup() {
 		return
 	}
 
-	bean := &db.GroupBean{
-		GroupName:  cga.group.groupName,
-		Comments:   cga.group.comments,
-		Account:    cga.group.account,
-		CreateDate: time.Now().Format(time.RFC3339),
-	}
-	bean, cga.err = db.ActiveService().CreateGroup(bean)
+	bean := cga.group.ToBean()
+	bean.CreateDate = time.Now().Format(time.RFC3339)
+	cga.err = db.ActiveService().CreateGroup(&bean)
 	if cga.err != nil {
 		if cga.err == db.GroupExistError {
 			cga.status = http.StatusConflict

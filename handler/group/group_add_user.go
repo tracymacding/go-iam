@@ -40,6 +40,16 @@ func (gaua *GroupAddUserApi) Validate() {
 		gaua.status = http.StatusBadRequest
 		return
 	}
+	if ok, err := user.IsUserNameValid(gaua.user); !ok {
+		gaua.err = err
+		gaua.status = http.StatusBadRequest
+		return
+	}
+	if ok, err := IsGroupNameValid(gaua.group); !ok {
+		gaua.err = err
+		gaua.status = http.StatusBadRequest
+		return
+	}
 }
 
 func (gaua *GroupAddUserApi) Auth() {
@@ -52,7 +62,8 @@ func (gaua *GroupAddUserApi) Auth() {
 func (gaua *GroupAddUserApi) Response() {
 	json := simplejson.New()
 	if gaua.err != nil {
-		context.Set(gaua.req, "request_error", gerror.NewIAMError(gaua.status, gaua.err))
+		gerr := gerror.NewIAMError(gaua.status, gaua.err)
+		context.Set(gaua.req, "request_error", gerr)
 		json.Set("ErrorMessage", gaua.err.Error())
 	}
 	json.Set("RequestId", context.Get(gaua.req, "request_id"))
@@ -69,6 +80,20 @@ var (
 )
 
 func (gaua *GroupAddUserApi) groupAddUser() {
+	userId, err := user.GetUserId(gaua.account, gaua.user)
+	if err != nil {
+		gaua.err = err
+		return
+	}
+	gaua.userId = userId
+
+	groupId, err := GetGroupId(gaua.account, gaua.group)
+	if err != nil {
+		gaua.err = err
+		return
+	}
+	gaua.groupId = groupId
+
 	cnt := 0
 	cnt, gaua.err = db.ActiveService().UserJoinedGroupsNum(gaua.userId)
 	if gaua.err != nil {
@@ -113,20 +138,6 @@ func GroupAddUserHandler(w http.ResponseWriter, r *http.Request) {
 	if gaua.Validate(); gaua.err != nil {
 		return
 	}
-
-	userId, err := user.GetUserId(gaua.account, gaua.user)
-	if err != nil {
-		gaua.err = err
-		return
-	}
-	gaua.userId = userId
-
-	groupId, err := GetGroupId(gaua.account, gaua.group)
-	if err != nil {
-		gaua.err = err
-		return
-	}
-	gaua.groupId = groupId
 
 	if gaua.groupAddUser(); gaua.err != nil {
 		return

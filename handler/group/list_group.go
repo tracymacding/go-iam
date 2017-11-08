@@ -28,8 +28,9 @@ func (lga *ListGroupApi) Parse() {
 
 	if items == "" {
 		lga.maxItems = 100
+	} else {
+		lga.maxItems, lga.err = strconv.Atoi(items)
 	}
-	lga.maxItems, lga.err = strconv.Atoi(items)
 }
 
 var (
@@ -61,8 +62,9 @@ func (lga *ListGroupApi) Response() {
 		}
 		json.Set("Groups", jsons)
 	} else {
+		gerr := gerror.NewIAMError(lga.status, lga.err)
+		context.Set(lga.req, "request_error", gerr)
 		json.Set("ErrorMessage", lga.err.Error())
-		context.Set(lga.req, "request_error", gerror.NewIAMError(lga.status, lga.err))
 	}
 	json.Set("RequestId", context.Get(lga.req, "request_id"))
 	data, _ := json.Encode()
@@ -83,19 +85,13 @@ func (lga *ListGroupApi) listGroup() {
 	}
 
 	for _, bean := range beans {
-		group := &Group{
-			groupId:    bean.GroupId.Hex(),
-			groupName:  bean.GroupName,
-			comments:   bean.Comments,
-			createDate: bean.CreateDate,
-		}
-		lga.groups = append(lga.groups, group)
+		group := FromBean(bean)
+		lga.groups = append(lga.groups, &group)
 	}
 }
 
 func ListGroupHandler(w http.ResponseWriter, r *http.Request) {
 	lga := ListGroupApi{req: r, status: http.StatusOK}
-
 	defer lga.Response()
 
 	if lga.Auth(); lga.err != nil {

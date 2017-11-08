@@ -42,7 +42,7 @@ type UserService interface {
 }
 
 type GroupService interface {
-	CreateGroup(group *GroupBean) (*GroupBean, error)
+	CreateGroup(group *GroupBean) error
 	GetGroup(account, group string, grp *GroupBean) error
 	GetGroupById(groupId string, grp *GroupBean) error
 	DeleteGroup(account, group string) error

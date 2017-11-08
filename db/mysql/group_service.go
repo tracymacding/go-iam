@@ -4,8 +4,8 @@ import (
 	"github.com/go-iam/db"
 )
 
-func (ms *mysqlService) CreateGroup(group *db.GroupBean) (*db.GroupBean, error) {
-	return nil, nil
+func (ms *mysqlService) CreateGroup(group *db.GroupBean) error {
+	return nil
 }
 
 func (ms *mysqlService) GroupCountOfAccount(accountId string) (int, error) {

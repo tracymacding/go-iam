@@ -38,6 +38,16 @@ func (grua *GroupRemoveUserApi) Validate() {
 		grua.status = http.StatusBadRequest
 		return
 	}
+	if ok, err := user.IsUserNameValid(grua.user); !ok {
+		grua.err = err
+		grua.status = http.StatusBadRequest
+		return
+	}
+	if ok, err := IsGroupNameValid(grua.group); !ok {
+		grua.err = err
+		grua.status = http.StatusBadRequest
+		return
+	}
 }
 
 func (grua *GroupRemoveUserApi) Auth() {
@@ -50,7 +60,8 @@ func (grua *GroupRemoveUserApi) Auth() {
 func (grua *GroupRemoveUserApi) Response() {
 	json := simplejson.New()
 	if grua.err != nil {
-		context.Set(grua.req, "request_error", gerror.NewIAMError(grua.status, grua.err))
+		gerr := gerror.NewIAMError(grua.status, grua.err)
+		context.Set(grua.req, "request_error", gerr)
 		json.Set("ErrorMessage", grua.err.Error())
 	}
 	json.Set("RequestId", context.Get(grua.req, "request_id"))
@@ -59,6 +70,20 @@ func (grua *GroupRemoveUserApi) Response() {
 }
 
 func (grua *GroupRemoveUserApi) groupRemoveUser() {
+	userId, err := user.GetUserId(grua.account, grua.user)
+	if err != nil {
+		grua.err = err
+		return
+	}
+	grua.userId = userId
+
+	groupId, err := GetGroupId(grua.account, grua.group)
+	if err != nil {
+		grua.err = err
+		return
+	}
+	grua.groupId = groupId
+
 	bean := &db.GroupUserBean{
 		GroupId: grua.groupId,
 		UserId:  grua.userId,
@@ -89,20 +114,6 @@ func GroupRemoveUserHandler(w http.ResponseWriter, r *http.Request) {
 	if grua.Validate(); grua.err != nil {
 		return
 	}
-
-	userId, err := user.GetUserId(grua.account, grua.user)
-	if err != nil {
-		grua.err = err
-		return
-	}
-	grua.userId = userId
-
-	groupId, err := GetGroupId(grua.account, grua.group)
-	if err != nil {
-		grua.err = err
-		return
-	}
-	grua.groupId = groupId
 
 	if grua.groupRemoveUser(); grua.err != nil {
 		return

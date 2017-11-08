@@ -53,10 +53,35 @@ func (uua *UpdateUserApi) Auth() {
 }
 
 func (uua *UpdateUserApi) updateUser() {
+	gua := GetUserApi{}
+	gua.user.userName = uua.user.userName
+	gua.user.account = uua.user.account
+
+	if gua.getUser(); gua.err != nil {
+		uua.err = gua.err
+		return
+	}
+
+	if uua.user.displayName == "" {
+		uua.user.displayName = gua.user.displayName
+	}
+	if uua.user.phone == "" {
+		uua.user.phone = gua.user.phone
+	}
+	if uua.user.email == "" {
+		uua.user.email = gua.user.email
+	}
+	if uua.user.comments == "" {
+		uua.user.comments = gua.user.comments
+	}
+	if uua.user.password == "" {
+		uua.user.password = gua.user.password
+	}
 	bean := uua.user.ToBean()
 	if uua.newUser != "" {
 		bean.UserName = uua.newUser
 	}
+
 	user, account := uua.user.userName, uua.user.account
 	uua.err = db.ActiveService().UpdateIamUser(user, account, &bean)
 	if uua.err == db.UserNotExistError {
@@ -99,30 +124,7 @@ func UpdateIAMUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	gua := GetUserApi{}
-	gua.user.userName = uua.user.userName
-	gua.user.account = uua.user.account
-
-	if gua.getUser(); gua.err != nil {
-		uua.err = gua.err
+	if uua.updateUser(); uua.err != nil {
 		return
 	}
-
-	if uua.user.displayName == "" {
-		uua.user.displayName = gua.user.displayName
-	}
-	if uua.user.phone == "" {
-		uua.user.phone = gua.user.phone
-	}
-	if uua.user.email == "" {
-		uua.user.email = gua.user.email
-	}
-	if uua.user.comments == "" {
-		uua.user.comments = gua.user.comments
-	}
-	if uua.user.password == "" {
-		uua.user.password = gua.user.password
-	}
-
-	uua.updateUser()
 }

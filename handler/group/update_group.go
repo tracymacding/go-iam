@@ -34,6 +34,28 @@ func (uga *UpdateGroupApi) Validate() {
 		uga.status = http.StatusBadRequest
 		return
 	}
+	ok, err := IsGroupNameValid(uga.group.groupName)
+	if !ok {
+		uga.err = err
+		uga.status = http.StatusBadRequest
+		return
+	}
+	if uga.newGroup != "" {
+		ok, err := IsGroupNameValid(uga.newGroup)
+		if !ok {
+			uga.err = err
+			uga.status = http.StatusBadRequest
+			return
+		}
+	}
+	if uga.group.comments != "" {
+		ok, err := IsCommentsValid(uga.group.comments)
+		if !ok {
+			uga.err = err
+			uga.status = http.StatusBadRequest
+			return
+		}
+	}
 }
 
 func (uga *UpdateGroupApi) Auth() {
@@ -44,11 +66,20 @@ func (uga *UpdateGroupApi) Auth() {
 }
 
 func (uga *UpdateGroupApi) updateGroup() {
-	bean := db.GroupBean{
-		GroupName:  uga.group.groupName,
-		Comments:   uga.group.comments,
-		CreateDate: uga.group.createDate,
+	gga := GetGroupApi{}
+	gga.group.groupName = uga.group.groupName
+	gga.group.account = uga.group.account
+
+	if gga.getGroup(); gga.err != nil {
+		uga.err = gga.err
+		return
 	}
+
+	if uga.group.comments == "" {
+		uga.group.comments = gga.group.comments
+	}
+
+	bean := uga.group.ToBean()
 	if uga.newGroup != "" {
 		bean.GroupName = uga.newGroup
 	}
@@ -69,8 +100,9 @@ func (uga *UpdateGroupApi) Response() {
 		j := uga.group.Json()
 		json.Set("Group", j)
 	} else {
+		gerr := gerror.NewIAMError(uga.status, uga.err)
+		context.Set(uga.req, "request_error", gerr)
 		json.Set("ErrorMessage", uga.err.Error())
-		context.Set(uga.req, "request_error", gerror.NewIAMError(uga.status, uga.err))
 	}
 	json.Set("RequestId", context.Get(uga.req, "request_id"))
 	data, _ := json.Encode()
@@ -91,19 +123,6 @@ func UpdateGroupHandler(w http.ResponseWriter, r *http.Request) {
 
 	if uga.Validate(); uga.err != nil {
 		return
-	}
-
-	gga := GetGroupApi{}
-	gga.group.groupName = uga.group.groupName
-	gga.group.account = uga.group.account
-
-	if gga.getGroup(); gga.err != nil {
-		uga.err = gga.err
-		return
-	}
-
-	if uga.group.comments == "" {
-		uga.group.comments = gga.group.comments
 	}
 
 	if uga.updateGroup(); uga.err != nil {

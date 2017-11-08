@@ -20,8 +20,8 @@ type User struct {
 }
 
 var (
-	UserNameTooLongError    = errors.New("UserName beyond the length limit")
-	DisplayNameTooLongError = errors.New("DisplayName beyond the length limit")
+	UserNameTooLongError    = errors.New("user name beyond the length limit")
+	DisplayNameTooLongError = errors.New("display name beyond the length limit")
 	CommentTooLongError     = errors.New("comments beyond the length limit")
 	UserNameInvalidError    = errors.New("user name contains invalid char")
 	DisplayNameInvalidError = errors.New("display name contains invalid char")
@@ -35,83 +35,84 @@ const (
 	MaxCommentLength     = 128
 )
 
-func (user *User) checkUserName() error {
-	if len(user.userName) > MaxUserNameLength {
-		return UserNameTooLongError
+func IsUserNameValid(userName string) (bool, error) {
+	if len(userName) > MaxUserNameLength {
+		return false, UserNameTooLongError
 	}
-	match, _ := regexp.MatchString("^[a-zA-Z0-9\\.@\\-_]+$", user.userName)
-	if !match {
-		return UserNameInvalidError
+	reg := `^[a-zA-Z0-9\\.@\\-_]+$`
+	rgx := regexp.MustCompile(reg)
+	if !rgx.MatchString(userName) {
+		return false, UserNameInvalidError
 	}
-	return nil
+	return true, nil
 }
 
-func (user *User) checkDisplayName() error {
-	if user.displayName == "" {
-		return nil
+func IsDisplayNameValid(displayName string) (bool, error) {
+	if displayName == "" {
+		return true, nil
 	}
 
-	if len(user.displayName) > MaxDisplayNameLength {
-		return DisplayNameTooLongError
+	if len(displayName) > MaxDisplayNameLength {
+		return true, DisplayNameTooLongError
 	}
-	match, _ := regexp.MatchString("^[a-zA-Z0-9\\.@\\-\u4e00-\u9fa5]+$", user.displayName)
-	if !match {
-		return DisplayNameInvalidError
+
+	reg := `^[a-zA-Z0-9\\.@\\-\u4e00-\u9fa5]+$`
+	rgx := regexp.MustCompile(reg)
+	if !rgx.MatchString(displayName) {
+		return false, DisplayNameInvalidError
 	}
-	return nil
+	return true, nil
 }
 
-func (user *User) checkPhone() error {
+func IsPhoneValid(phone string) (bool, error) {
 	reg := `^1([38][0-9]|14[57]|5[^4])\d{8}$`
 	rgx := regexp.MustCompile(reg)
-	if user.phone != "" && !rgx.MatchString(user.phone) {
-		return MobilePhoneInvalidError
+	if phone != "" && !rgx.MatchString(phone) {
+		return false, MobilePhoneInvalidError
 	}
-	return nil
+	return true, nil
 }
 
-func (user *User) checkEmail() error {
-	if user.email == "" {
-		return nil
+func IsEmailValid(email string) (bool, error) {
+	reg := `^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+`
+	rgx := regexp.MustCompile(reg)
+	if email != "" && !rgx.MatchString(email) {
+		return false, EmailInvalidError
 	}
 
-	m, _ := regexp.MatchString("^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+", user.email)
-	if !m {
-		return EmailInvalidError
-	}
-	return nil
+	return true, nil
 }
 
-func (user *User) checkComments() error {
-	if len(user.comments) > MaxCommentLength {
-		return CommentTooLongError
+func IsCommentsValid(comments string) (bool, error) {
+	if len(comments) > MaxCommentLength {
+		return false, CommentTooLongError
 	}
-	return nil
+	return true, nil
 }
 
 func (user *User) validate() error {
-	err := user.checkUserName()
-	if err != nil {
+	ok, err := IsUserNameValid(user.userName)
+	if !ok {
 		return err
 	}
 
-	err = user.checkDisplayName()
-	if err != nil {
+	ok, err = IsDisplayNameValid(user.displayName)
+	if !ok {
 		return err
 	}
 
-	err = user.checkComments()
-	if err != nil {
+	ok, err = IsCommentsValid(user.comments)
+	if !ok {
 		return err
 	}
 
-	err = user.checkEmail()
-	if err != nil {
+	ok, err = IsEmailValid(user.email)
+	if !ok {
 		return err
 	}
 
-	err = user.checkPhone()
-	if err != nil {
+	ok, err = IsPhoneValid(user.phone)
+	if !ok {
 		return err
 	}
 

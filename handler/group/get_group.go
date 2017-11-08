@@ -27,6 +27,11 @@ func (gua *GetGroupApi) Validate() {
 		gua.status = http.StatusBadRequest
 		return
 	}
+	if ok, err := IsGroupNameValid(gua.group.groupName); !ok {
+		gua.err = err
+		gua.status = http.StatusBadRequest
+		return
+	}
 }
 
 func (gua *GetGroupApi) Auth() {
@@ -42,7 +47,8 @@ func (gua *GetGroupApi) Response() {
 		j := gua.group.Json()
 		json.Set("User", j)
 	} else {
-		context.Set(gua.req, "request_error", gerror.NewIAMError(gua.status, gua.err))
+		gerr := gerror.NewIAMError(gua.status, gua.err)
+		context.Set(gua.req, "request_error", gerr)
 		json.Set("ErrorMessage", gua.err.Error())
 	}
 	json.Set("RequestId", context.Get(gua.req, "request_id"))
@@ -63,9 +69,7 @@ func (gua *GetGroupApi) getGroup() {
 		return
 	}
 
-	gua.group.groupId = bean.GroupId.Hex()
-	gua.group.comments = bean.Comments
-	gua.group.createDate = bean.CreateDate
+	gua.group = FromBean(&bean)
 }
 
 func GetGroupHandler(w http.ResponseWriter, r *http.Request) {

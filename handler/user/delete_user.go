@@ -27,6 +27,11 @@ func (dua *DeleteUserApi) Validate() {
 		dua.status = http.StatusBadRequest
 		return
 	}
+	if ok, err := IsUserNameValid(dua.user.userName); !ok {
+		dua.err = err
+		dua.status = http.StatusBadRequest
+		return
+	}
 }
 
 func (dua *DeleteUserApi) Auth() {
