@@ -9,8 +9,8 @@ func (ms *mysqlService) GetKey(keyId string, key *db.KeyBean) error {
 	return nil
 }
 
-func (ms *mysqlService) CreateKey(key *db.KeyBean) (*db.KeyBean, error) {
-	return nil, nil
+func (ms *mysqlService) CreateKey(key *db.KeyBean) error {
+	return nil
 }
 
 func (ms *mysqlService) DeleteKey(key string) error {

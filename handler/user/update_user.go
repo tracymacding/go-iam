@@ -62,6 +62,7 @@ func (uua *UpdateUserApi) updateUser() {
 		return
 	}
 
+	uua.user.userId = gua.user.userId
 	if uua.user.displayName == "" {
 		uua.user.displayName = gua.user.displayName
 	}
@@ -83,7 +84,7 @@ func (uua *UpdateUserApi) updateUser() {
 	}
 
 	user, account := uua.user.userName, uua.user.account
-	uua.err = db.ActiveService().UpdateIamUser(user, account, &bean)
+	uua.err = db.ActiveService().UpdateIamUser(account, user, &bean)
 	if uua.err == db.UserNotExistError {
 		uua.status = http.StatusNotFound
 	} else if uua.err == db.UserExistError {

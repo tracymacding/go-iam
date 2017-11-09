@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/bitly/go-simplejson"
 	"github.com/go-iam/db"
+	"gopkg.in/mgo.v2/bson"
 	"regexp"
 )
 
@@ -56,11 +57,13 @@ func IsDisplayNameValid(displayName string) (bool, error) {
 		return true, DisplayNameTooLongError
 	}
 
-	reg := `^[a-zA-Z0-9\\.@\\-\u4e00-\u9fa5]+$`
-	rgx := regexp.MustCompile(reg)
-	if !rgx.MatchString(displayName) {
-		return false, DisplayNameInvalidError
-	}
+	// TODO: fix me: regexp bug
+	// reg := `^[a-zA-Z0-9\\.@\\-\u4e00-\u9fa5]+$`
+	// rgx := regexp.MustCompile(reg)
+	// if !rgx.MatchString(displayName) {
+	// 	return false, DisplayNameInvalidError
+	// }
+
 	return true, nil
 }
 
@@ -134,6 +137,7 @@ func FromBean(bean *db.UserBean) User {
 
 func (user *User) ToBean() db.UserBean {
 	return db.UserBean{
+		UserId:      bson.ObjectIdHex(user.userId),
 		UserName:    user.userName,
 		DisplayName: user.displayName,
 		Phone:       user.phone,

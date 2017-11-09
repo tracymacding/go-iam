@@ -86,7 +86,7 @@ type PolicyService interface {
 }
 
 type KeyService interface {
-	CreateKey(key *KeyBean) (*KeyBean, error)
+	CreateKey(key *KeyBean) error
 	GetKey(id string, key *KeyBean) error
 	DeleteKey(accessKeyId string) error
 	UpdateKey(id string, key *KeyBean) error

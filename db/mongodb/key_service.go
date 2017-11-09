@@ -6,10 +6,10 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-func (ms *mongoService) CreateKey(key *db.KeyBean) (*db.KeyBean, error) {
+func (ms *mongoService) CreateKey(key *db.KeyBean) error {
 	session, err := mgo.Dial(ms.servers)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	defer session.Close()
@@ -20,9 +20,9 @@ func (ms *mongoService) CreateKey(key *db.KeyBean) (*db.KeyBean, error) {
 	key.AccessKeySecret = bson.NewObjectId().Hex()
 	err = c.Insert(key)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return key, nil
+	return nil
 }
 
 func (ms *mongoService) GetKey(id string, key *db.KeyBean) error {
