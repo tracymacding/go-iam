@@ -24,7 +24,7 @@ func (ms *mysqlService) DeleteIamUser(account, user string) error {
 	return nil
 }
 
-func (ms *mysqlService) UpdateIamUser(account, user string, usr *db.UserBean) error {
+func (ms *mysqlService) UpdateIamUser(usr *db.UserBean) error {
 	return nil
 }
 

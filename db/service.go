@@ -36,7 +36,7 @@ type UserService interface {
 	GetIamUser(account, user string, usr *UserBean) error
 	GetIamUserById(userId string, usr *UserBean) error
 	DeleteIamUser(account, user string) error
-	UpdateIamUser(account, user string, usr *UserBean) error
+	UpdateIamUser(usr *UserBean) error
 	ListIamUser(account, marker string, max int, usrs *[]*UserBean) error
 	UserCountOfAccount(accountId string) (int, error)
 }

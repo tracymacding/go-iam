@@ -87,7 +87,7 @@ func (ms *mongoService) DeleteIamUser(account, user string) error {
 	return nil
 }
 
-func (ms *mongoService) UpdateIamUser(account, user string, usr *db.UserBean) error {
+func (ms *mongoService) UpdateIamUser(usr *db.UserBean) error {
 	session, err := mgo.Dial(ms.servers)
 	if err != nil {
 		return err
@@ -97,7 +97,7 @@ func (ms *mongoService) UpdateIamUser(account, user string, usr *db.UserBean) er
 	session.SetMode(mgo.Monotonic, true)
 
 	c := session.DB("go_iam").C("user")
-	err = c.Update(bson.M{"name": user, "account": account}, usr)
+	err = c.UpdateId(usr.UserId, usr)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return db.UserNotExistError
