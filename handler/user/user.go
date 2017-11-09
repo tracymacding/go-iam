@@ -4,7 +4,6 @@ import (
 	"errors"
 	"github.com/bitly/go-simplejson"
 	"github.com/go-iam/db"
-	"gopkg.in/mgo.v2/bson"
 	"regexp"
 )
 
@@ -137,7 +136,6 @@ func FromBean(bean *db.UserBean) User {
 
 func (user *User) ToBean() db.UserBean {
 	return db.UserBean{
-		UserId:      bson.ObjectIdHex(user.userId),
 		UserName:    user.userName,
 		DisplayName: user.displayName,
 		Phone:       user.phone,

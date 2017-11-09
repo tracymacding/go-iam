@@ -6,6 +6,7 @@ import (
 	"github.com/go-iam/db"
 	"github.com/go-iam/gerror"
 	"github.com/go-iam/handler/util"
+	"gopkg.in/mgo.v2/bson"
 	"net/http"
 )
 
@@ -79,6 +80,7 @@ func (uua *UpdateUserApi) updateUser() {
 		uua.user.password = gua.user.password
 	}
 	bean := uua.user.ToBean()
+	bean.UserId = bson.ObjectIdHex(gua.user.userId)
 	if uua.newUser != "" {
 		bean.UserName = uua.newUser
 	}
