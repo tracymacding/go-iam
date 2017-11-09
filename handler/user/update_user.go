@@ -64,6 +64,7 @@ func (uua *UpdateUserApi) updateUser() {
 	}
 
 	uua.user.userId = gua.user.userId
+	uua.user.createDate = gua.user.createDate
 	if uua.user.displayName == "" {
 		uua.user.displayName = gua.user.displayName
 	}
