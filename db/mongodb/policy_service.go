@@ -57,7 +57,7 @@ func (ms *mongoService) GetPolicyById(policyId string, bean *db.PolicyBean) erro
 	session.SetMode(mgo.Monotonic, true)
 
 	c := session.DB("go_iam").C("policy")
-	err = c.FindId(policyId).One(bean)
+	err = c.FindId(bson.ObjectIdHex(policyId)).One(bean)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return db.PolicyNotExistError
@@ -87,7 +87,7 @@ func (ms *mongoService) DeletePolicy(account, policy string) error {
 	return nil
 }
 
-func (ms *mongoService) UpdatePolicy(account, policy string, bean *db.PolicyBean) error {
+func (ms *mongoService) UpdatePolicy(policyId string, bean *db.PolicyBean) error {
 	session, err := mgo.Dial(ms.servers)
 	if err != nil {
 		return err
@@ -97,7 +97,8 @@ func (ms *mongoService) UpdatePolicy(account, policy string, bean *db.PolicyBean
 	session.SetMode(mgo.Monotonic, true)
 
 	c := session.DB("go_iam").C("policy")
-	err = c.Update(bson.M{"name": policy, "account": account}, bean)
+	bean.PolicyId = bson.ObjectIdHex(policyId)
+	err = c.UpdateId(bean.PolicyId, bean)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return db.PolicyNotExistError
@@ -106,6 +107,36 @@ func (ms *mongoService) UpdatePolicy(account, policy string, bean *db.PolicyBean
 			return db.PolicyExistError
 		}
 		return err
+	}
+	return nil
+}
+
+func (ms *mongoService) ListAllPolicy(account, marker string, max int, policys *[]*db.PolicyBean) error {
+	session, err := mgo.Dial(ms.servers)
+	if err != nil {
+		return err
+	}
+
+	defer session.Close()
+	session.SetMode(mgo.Monotonic, true)
+
+	c := session.DB("go_iam").C("policy")
+	for len(*policys) < max {
+		query := c.Find(bson.M{"account": account, "name": bson.M{"$gt": marker}}).Sort("name").Limit(max - len(*policys))
+		cnt, err := query.Count()
+		if err != nil {
+			return err
+		}
+		if cnt == 0 {
+			break
+		}
+		iter := query.Iter()
+
+		var policy db.PolicyBean
+		for iter.Next(&policy) {
+			*policys = append(*policys, &policy)
+			marker = policy.PolicyName
+		}
 	}
 	return nil
 }

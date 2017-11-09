@@ -80,8 +80,9 @@ type PolicyService interface {
 	GetPolicy(account, policy string, bean *PolicyBean) error
 	GetPolicyById(policyId string, policy *PolicyBean) error
 	DeletePolicy(account, policy string) error
-	UpdatePolicy(account, policy string, bean *PolicyBean) error
+	UpdatePolicy(policyId string, bean *PolicyBean) error
 	ListPolicy(account, marker string, ptype, max int, groups *[]*PolicyBean) error
+	ListAllPolicy(account, marker string, max int, groups *[]*PolicyBean) error
 	PolicyCountOfAccount(accountId string) (int, error)
 }
 

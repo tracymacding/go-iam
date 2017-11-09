@@ -50,11 +50,11 @@ func (policy *Policy) Json() *simplejson.Json {
 	j := simplejson.New()
 	j.Set("PolicyId", policy.policyId)
 	j.Set("PolicyName", policy.policyName)
-	j.Set("PolicyType", policy.policyType)
+	j.Set("PolicyType", policy.policyType.String())
 	j.Set("Description", policy.description)
 	j.Set("DefaultVersion", policy.version)
 	j.Set("CreateDate", policy.createDate)
-	j.Set("UpdateDate", policy.createDate)
+	j.Set("UpdateDate", policy.updateDate)
 	return j
 }
 

@@ -29,6 +29,7 @@ func (cpa *CreatePolicyApi) Parse() {
 	cpa.policy.policyName = params["PolicyName"]
 	cpa.policy.document = params["PolicyDocument"]
 	cpa.policy.description = params["PolicyDescription"]
+	cpa.policy.version = "2017-10-10"
 	cpa.policy.policyType = PolicyCustom
 }
 
@@ -105,9 +106,7 @@ func (cpa *CreatePolicyApi) createPolicy() {
 		}
 		return
 	}
-	cpa.policy.policyId = bean.PolicyId.Hex()
-	cpa.policy.createDate = bean.CreateDate
-	cpa.policy.updateDate = bean.UpdateDate
+	cpa.policy = FromBean(&bean)
 }
 
 func CreatePolicyHandler(w http.ResponseWriter, r *http.Request) {

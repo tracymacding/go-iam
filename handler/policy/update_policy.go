@@ -7,6 +7,7 @@ import (
 	"github.com/go-iam/gerror"
 	"github.com/go-iam/handler/util"
 	"net/http"
+	"time"
 )
 
 type UpdatePolicyApi struct {
@@ -39,6 +40,32 @@ func (upa *UpdatePolicyApi) Validate() {
 		upa.status = http.StatusBadRequest
 		return
 	}
+	if ok, err := IsPolicyNameValid(upa.policy.policyName); !ok {
+		upa.err = err
+		upa.status = http.StatusBadRequest
+		return
+	}
+	if upa.newPolicy != "" {
+		if ok, err := IsPolicyNameValid(upa.newPolicy); !ok {
+			upa.err = err
+			upa.status = http.StatusBadRequest
+			return
+		}
+	}
+	if upa.newDocument != "" {
+		if ok, err := IsPolicyDocumentValid(upa.newDocument); !ok {
+			upa.err = err
+			upa.status = http.StatusBadRequest
+			return
+		}
+	}
+	if upa.newDescription != "" {
+		if ok, err := IsDescriptionValid(upa.newDescription); !ok {
+			upa.err = err
+			upa.status = http.StatusBadRequest
+			return
+		}
+	}
 }
 
 func (upa *UpdatePolicyApi) Auth() {
@@ -64,21 +91,30 @@ func (upa *UpdatePolicyApi) Response() {
 }
 
 func (upa *UpdatePolicyApi) updatePolicy() {
-	bean := db.PolicyBean{
-		PolicyName:  upa.policy.policyName,
-		PolicyType:  int(upa.policy.policyType),
-		Account:     upa.policy.account,
-		Document:    upa.policy.document,
-		Description: upa.policy.description,
-		Version:     upa.policy.version,
-		CreateDate:  upa.policy.createDate,
-		UpdateDate:  upa.policy.updateDate,
+	gpa := GetPolicyApi{}
+	gpa.policy.policyName = upa.policy.policyName
+	gpa.policy.account = upa.policy.account
+
+	if gpa.getPolicy(); gpa.err != nil {
+		upa.err = gpa.err
+		upa.status = gpa.status
+		return
 	}
-	policy, account := upa.policy.policyName, upa.policy.account
+
+	upa.policy = gpa.policy
 	if upa.newPolicy != "" {
-		bean.PolicyName = upa.newPolicy
+		upa.policy.policyName = upa.newPolicy
 	}
-	upa.err = db.ActiveService().UpdatePolicy(policy, account, &bean)
+	if upa.newDocument != "" {
+		upa.policy.document = upa.newDocument
+	}
+	if upa.newDescription != "" {
+		upa.policy.description = upa.newDescription
+	}
+	upa.policy.updateDate = time.Now().Format(time.RFC3339)
+
+	bean := upa.policy.ToBean()
+	upa.err = db.ActiveService().UpdatePolicy(upa.policy.policyId, &bean)
 	if upa.err == db.PolicyNotExistError {
 		upa.status = http.StatusNotFound
 	} else if upa.err == db.PolicyExistError {
@@ -86,6 +122,7 @@ func (upa *UpdatePolicyApi) updatePolicy() {
 	} else {
 		upa.status = http.StatusInternalServerError
 	}
+	upa.policy = FromBean(&bean)
 }
 
 func UpdatePolicyHandler(w http.ResponseWriter, r *http.Request) {
@@ -102,29 +139,6 @@ func UpdatePolicyHandler(w http.ResponseWriter, r *http.Request) {
 
 	if upa.Validate(); upa.err != nil {
 		return
-	}
-
-	gpa := GetPolicyApi{}
-	gpa.policy.policyName = upa.policy.policyName
-	gpa.policy.account = upa.policy.account
-
-	if gpa.getPolicy(); gpa.err != nil {
-		upa.err = gpa.err
-		return
-	}
-
-	upa.policy.policyType = gpa.policy.policyType
-	upa.policy.document = gpa.policy.document
-	upa.policy.description = gpa.policy.description
-	upa.policy.version = gpa.policy.version
-	upa.policy.createDate = gpa.policy.createDate
-	upa.policy.updateDate = gpa.policy.updateDate
-
-	if upa.newDocument != "" {
-		upa.policy.document = upa.newDocument
-	}
-	if upa.newDescription != "" {
-		upa.policy.description = upa.newDescription
 	}
 
 	if upa.updatePolicy(); upa.err != nil {

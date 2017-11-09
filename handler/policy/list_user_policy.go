@@ -83,6 +83,7 @@ func (luga *ListUserPolicyApi) listUserPolicy() {
 		var policy db.PolicyBean
 		luga.err = db.ActiveService().GetPolicyById(bean.PolicyId, &policy)
 		if luga.err != nil {
+			luga.status = http.StatusInternalServerError
 			return
 		}
 		up := &UserPolicy{

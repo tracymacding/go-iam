@@ -40,7 +40,7 @@ func (gpa *GetPolicyApi) Response() {
 	json := simplejson.New()
 	if gpa.err == nil {
 		j := gpa.policy.Json()
-		json.Set("User", j)
+		json.Set("Policy", j)
 	} else {
 		gerr := gerror.NewIAMError(gpa.status, gpa.err)
 		context.Set(gpa.req, "request_error", gerr)

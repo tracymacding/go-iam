@@ -24,7 +24,11 @@ func (ms *mysqlService) GetPolicyById(policyId string, bean *db.PolicyBean) erro
 	return nil
 }
 
-func (ms *mysqlService) UpdatePolicy(account, policy string, bean *db.PolicyBean) error {
+func (ms *mysqlService) UpdatePolicy(policyId string, bean *db.PolicyBean) error {
+	return nil
+}
+
+func (ms *mysqlService) ListAllPolicy(account, marker string, max int, policys *[]*db.PolicyBean) error {
 	return nil
 }
 
