@@ -24,7 +24,7 @@ func (ms *mysqlService) GetGroupById(groupId string, grp *db.GroupBean) error {
 	return nil
 }
 
-func (ms *mysqlService) UpdateGroup(account, group string, grp *db.GroupBean) error {
+func (ms *mysqlService) UpdateGroup(grp *db.GroupBean) error {
 	return nil
 }
 

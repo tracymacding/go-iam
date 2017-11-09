@@ -45,7 +45,7 @@ func (gua *GetGroupApi) Response() {
 	json := simplejson.New()
 	if gua.err == nil {
 		j := gua.group.Json()
-		json.Set("User", j)
+		json.Set("Group", j)
 	} else {
 		gerr := gerror.NewIAMError(gua.status, gua.err)
 		context.Set(gua.req, "request_error", gerr)

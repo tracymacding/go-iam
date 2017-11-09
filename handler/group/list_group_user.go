@@ -47,7 +47,8 @@ func (lgua *ListGroupUserApi) Auth() {
 func (lgua *ListGroupUserApi) Response() {
 	json := simplejson.New()
 	if lgua.err != nil {
-		context.Set(lgua.req, "request_error", gerror.NewIAMError(lgua.status, lgua.err))
+		gerr := gerror.NewIAMError(lgua.status, lgua.err)
+		context.Set(lgua.req, "request_error", gerr)
 		json.Set("ErrorMessage", lgua.err.Error())
 	} else {
 		jsons := make([]*simplejson.Json, 0)
@@ -64,6 +65,13 @@ func (lgua *ListGroupUserApi) Response() {
 }
 
 func (lgua *ListGroupUserApi) listGroupUser() {
+	groupId, err := GetGroupId(lgua.account, lgua.group)
+	if err != nil {
+		lgua.err = err
+		return
+	}
+	lgua.groupId = groupId
+
 	beans := make([]*db.GroupUserBean, 0)
 	lgua.err = db.ActiveService().ListGroupUser(lgua.groupId, &beans)
 	if lgua.err != nil {
@@ -74,6 +82,11 @@ func (lgua *ListGroupUserApi) listGroupUser() {
 		var user db.UserBean
 		lgua.err = db.ActiveService().GetIamUserById(bean.UserId, &user)
 		if lgua.err != nil {
+			if lgua.err == db.UserNotExistError {
+				lgua.status = http.StatusNotFound
+			} else {
+				lgua.status = http.StatusInternalServerError
+			}
 			return
 		}
 		gu := &GroupUser{
@@ -102,13 +115,6 @@ func ListGroupUserHandler(w http.ResponseWriter, r *http.Request) {
 	if lgua.Validate(); lgua.err != nil {
 		return
 	}
-
-	groupId, err := GetGroupId(lgua.account, lgua.group)
-	if err != nil {
-		lgua.err = err
-		return
-	}
-	lgua.groupId = groupId
 
 	if lgua.listGroupUser(); lgua.err != nil {
 		return

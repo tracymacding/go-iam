@@ -19,7 +19,7 @@ type CreateGroupApi struct {
 }
 
 var (
-	MissGroupNameError = errors.New("user name missing")
+	MissGroupNameError = errors.New("group name missing")
 	TooManyGroupsError = errors.New("The count of group beyond the current limits")
 )
 

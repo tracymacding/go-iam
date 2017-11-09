@@ -57,7 +57,7 @@ func (ms *mongoService) GetGroupById(groupId string, grp *db.GroupBean) error {
 	session.SetMode(mgo.Monotonic, true)
 
 	c := session.DB("go_iam").C("group")
-	err = c.FindId(groupId).One(grp)
+	err = c.FindId(bson.ObjectIdHex(groupId)).One(grp)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return db.GroupNotExistError
@@ -87,7 +87,7 @@ func (ms *mongoService) DeleteGroup(account, group string) error {
 	return nil
 }
 
-func (ms *mongoService) UpdateGroup(account, group string, grp *db.GroupBean) error {
+func (ms *mongoService) UpdateGroup(grp *db.GroupBean) error {
 	session, err := mgo.Dial(ms.servers)
 	if err != nil {
 		return err
@@ -97,7 +97,7 @@ func (ms *mongoService) UpdateGroup(account, group string, grp *db.GroupBean) er
 	session.SetMode(mgo.Monotonic, true)
 
 	c := session.DB("go_iam").C("group")
-	err = c.Update(bson.M{"name": group, "account": account}, grp)
+	err = c.UpdateId(grp.GroupId, grp)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return db.GroupNotExistError

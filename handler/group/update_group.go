@@ -6,6 +6,7 @@ import (
 	"github.com/go-iam/db"
 	"github.com/go-iam/gerror"
 	"github.com/go-iam/handler/util"
+	"gopkg.in/mgo.v2/bson"
 	"net/http"
 )
 
@@ -75,16 +76,19 @@ func (uga *UpdateGroupApi) updateGroup() {
 		return
 	}
 
+	uga.group.groupId = gga.group.groupId
 	if uga.group.comments == "" {
 		uga.group.comments = gga.group.comments
 	}
+	uga.group.createDate = gga.group.createDate
 
 	bean := uga.group.ToBean()
+	bean.GroupId = bson.ObjectIdHex(gga.group.groupId)
+
 	if uga.newGroup != "" {
 		bean.GroupName = uga.newGroup
 	}
-	group, account := uga.group.groupName, uga.group.account
-	uga.err = db.ActiveService().UpdateGroup(group, account, &bean)
+	uga.err = db.ActiveService().UpdateGroup(&bean)
 	if uga.err == db.GroupNotExistError {
 		uga.status = http.StatusNotFound
 	} else if uga.err == db.GroupExistError {
@@ -92,6 +96,7 @@ func (uga *UpdateGroupApi) updateGroup() {
 	} else {
 		uga.status = http.StatusInternalServerError
 	}
+	uga.group = FromBean(&bean)
 }
 
 func (uga *UpdateGroupApi) Response() {

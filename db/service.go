@@ -46,7 +46,7 @@ type GroupService interface {
 	GetGroup(account, group string, grp *GroupBean) error
 	GetGroupById(groupId string, grp *GroupBean) error
 	DeleteGroup(account, group string) error
-	UpdateGroup(account, group string, grp *GroupBean) error
+	UpdateGroup(grp *GroupBean) error
 	ListGroup(account, marker string, max int, groups *[]*GroupBean) error
 	GroupCountOfAccount(accountId string) (int, error)
 }
