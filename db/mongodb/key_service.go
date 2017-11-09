@@ -75,7 +75,8 @@ func (ms *mongoService) UpdateKey(id string, key *db.KeyBean) error {
 	session.SetMode(mgo.Monotonic, true)
 
 	c := session.DB("go_iam").C("key")
-	err = c.UpdateId(bson.ObjectIdHex(id), key)
+	key.AccessKeyId = bson.ObjectIdHex(id)
+	err = c.UpdateId(key.AccessKeyId, key)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return db.KeyNotExistError
@@ -98,7 +99,7 @@ func (ms *mongoService) ListKey(entity string, entitype int, keys *[]*db.KeyBean
 	session.SetMode(mgo.Monotonic, true)
 
 	c := session.DB("go_iam").C("key")
-	iter := c.Find(bson.M{"entity": entity, "type": entitype}).Iter()
+	iter := c.Find(bson.M{"entity": entity, "entitype": entitype}).Iter()
 	return iter.All(keys)
 }
 

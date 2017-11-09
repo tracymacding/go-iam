@@ -2,6 +2,7 @@ package key
 
 import (
 	"github.com/bitly/go-simplejson"
+	"github.com/go-iam/db"
 )
 
 type Key struct {
@@ -11,6 +12,27 @@ type Key struct {
 	ownerType       KeyOwnerType
 	status          KeyStatus
 	createDate      string
+}
+
+func FromBean(bean *db.KeyBean) Key {
+	return Key{
+		accessKeyId:     bean.AccessKeyId.Hex(),
+		accessKeySecret: bean.AccessKeySecret,
+		owner:           bean.Entity,
+		ownerType:       KeyOwnerType(bean.Entitype),
+		status:          KeyStatus(bean.Status),
+		createDate:      bean.CreateDate,
+	}
+}
+
+func (k *Key) ToBean() db.KeyBean {
+	return db.KeyBean{
+		AccessKeySecret: k.accessKeySecret,
+		Entity:          k.owner,
+		Entitype:        int(k.ownerType),
+		Status:          int(k.status),
+		CreateDate:      k.createDate,
+	}
 }
 
 func (k *Key) Json() *simplejson.Json {
@@ -56,7 +78,7 @@ func ParseKeyStatus(status string) KeyStatus {
 	if status == "Active" {
 		return Active
 	}
-	if status == "InActive" {
+	if status == "Inactive" {
 		return Inactive
 	}
 	return ErrStatus

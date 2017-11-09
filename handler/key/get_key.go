@@ -40,9 +40,10 @@ func (gua *GetKeyApi) Response() {
 	json := simplejson.New()
 	if gua.err == nil {
 		j := gua.key.Json()
-		json.Set("User", j)
+		json.Set("AccessKey", j)
 	} else {
-		context.Set(gua.req, "request_error", gerror.NewIAMError(gua.status, gua.err))
+		gerr := gerror.NewIAMError(gua.status, gua.err)
+		context.Set(gua.req, "request_error", gerr)
 		json.Set("ErrorMessage", gua.err.Error())
 	}
 	json.Set("RequestId", context.Get(gua.req, "request_id"))
@@ -62,15 +63,11 @@ func (gua *GetKeyApi) getKey() {
 		}
 		return
 	}
-
-	gua.key.accessKeySecret = bean.AccessKeySecret
-	gua.key.status = KeyStatus(bean.Status)
-	gua.key.createDate = bean.CreateDate
+	gua.key = FromBean(&bean)
 }
 
 func GetKeyHandler(w http.ResponseWriter, r *http.Request) {
 	gua := GetKeyApi{req: r, status: http.StatusOK}
-
 	defer gua.Response()
 
 	if gua.Auth(); gua.err != nil {

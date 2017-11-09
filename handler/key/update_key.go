@@ -7,7 +7,6 @@ import (
 	"github.com/go-iam/db"
 	"github.com/go-iam/gerror"
 	"github.com/go-iam/handler/util"
-	"gopkg.in/mgo.v2/bson"
 	"net/http"
 )
 
@@ -56,12 +55,32 @@ func (uka *UpdateKeyApi) Auth() {
 }
 
 func (uka *UpdateKeyApi) updateKey() {
-	bean := db.KeyBean{
-		AccessKeyId:     bson.ObjectIdHex(uka.key.accessKeyId),
-		AccessKeySecret: uka.key.accessKeySecret,
-		Status:          int(uka.key.status),
-		CreateDate:      uka.key.createDate,
+	gka := GetKeyApi{}
+	gka.key.accessKeyId = uka.key.accessKeyId
+
+	if gka.getKey(); gka.err != nil {
+		uka.err = gka.err
+		if gka.err == db.KeyNotExistError {
+			uka.status = http.StatusNotFound
+		} else {
+			uka.status = http.StatusInternalServerError
+		}
+		return
 	}
+
+	// key status not changed
+	if uka.newStatus == KeyStatus(gka.key.status) {
+		return
+	}
+
+	uka.key.accessKeyId = gka.key.accessKeyId
+	uka.key.accessKeySecret = gka.key.accessKeySecret
+	uka.key.createDate = gka.key.createDate
+	uka.key.owner = gka.key.owner
+	uka.key.ownerType = gka.key.ownerType
+	uka.key.status = uka.newStatus
+
+	bean := uka.key.ToBean()
 	uka.err = db.ActiveService().UpdateKey(uka.key.accessKeyId, &bean)
 	if uka.err == db.KeyNotExistError {
 		uka.status = http.StatusNotFound
@@ -76,8 +95,9 @@ func (uka *UpdateKeyApi) Response() {
 		j := uka.key.Json()
 		json.Set("Key", j)
 	} else {
+		gerr := gerror.NewIAMError(uka.status, uka.err)
+		context.Set(uka.req, "request_error", gerr)
 		json.Set("ErrorMessage", uka.err.Error())
-		context.Set(uka.req, "request_error", gerror.NewIAMError(uka.status, uka.err))
 	}
 	json.Set("RequestId", context.Get(uka.req, "request_id"))
 	data, _ := json.Encode()
@@ -100,23 +120,6 @@ func UpdateKeyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	gka := GetKeyApi{}
-	gka.key.accessKeyId = uka.key.accessKeyId
-
-	if gka.getKey(); gka.err != nil {
-		uka.err = gka.err
-		return
-	}
-
-	// key status not changed
-	if uka.newStatus == KeyStatus(gka.key.status) {
-		return
-	}
-	uka.key.accessKeyId = gka.key.accessKeyId
-	uka.key.accessKeySecret = gka.key.accessKeySecret
-	uka.key.createDate = gka.key.createDate
-
-	uka.key.status = uka.newStatus
 	if uka.updateKey(); uka.err != nil {
 		return
 	}

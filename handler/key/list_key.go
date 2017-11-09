@@ -5,6 +5,7 @@ import (
 	"github.com/go-iam/context"
 	"github.com/go-iam/db"
 	"github.com/go-iam/gerror"
+	"github.com/go-iam/handler/user"
 	"github.com/go-iam/handler/util"
 	"net/http"
 )
@@ -29,6 +30,13 @@ func (lka *ListKeyApi) Parse() {
 }
 
 func (lka *ListKeyApi) Validate() {
+	if lka.entity != "" && lka.entitype == IAMUser {
+		if ok, err := user.IsUserNameValid(lka.entity); !ok {
+			lka.err = err
+			lka.status = http.StatusBadRequest
+			return
+		}
+	}
 }
 
 func (lka *ListKeyApi) Auth() {
@@ -48,8 +56,9 @@ func (lka *ListKeyApi) Response() {
 		}
 		json.Set("AccessKeys", jsons)
 	} else {
+		gerr := gerror.NewIAMError(lka.status, lka.err)
+		context.Set(lka.req, "request_error", gerr)
 		json.Set("ErrorMessage", lka.err.Error())
-		context.Set(lka.req, "request_error", gerror.NewIAMError(lka.status, lka.err))
 	}
 	json.Set("RequestId", context.Get(lka.req, "request_id"))
 	data, _ := json.Encode()
@@ -69,13 +78,8 @@ func (lka *ListKeyApi) listKey() {
 	}
 
 	for _, bean := range beans {
-		key := &Key{
-			accessKeyId:     bean.AccessKeyId.Hex(),
-			accessKeySecret: bean.AccessKeySecret,
-			status:          KeyStatus(bean.Status),
-			createDate:      bean.CreateDate,
-		}
-		lka.keys = append(lka.keys, key)
+		key := FromBean(bean)
+		lka.keys = append(lka.keys, &key)
 	}
 }
 

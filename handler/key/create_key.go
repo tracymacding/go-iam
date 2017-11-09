@@ -6,6 +6,7 @@ import (
 	"github.com/go-iam/context"
 	"github.com/go-iam/db"
 	"github.com/go-iam/gerror"
+	"github.com/go-iam/handler/user"
 	"github.com/go-iam/handler/util"
 	"net/http"
 	"time"
@@ -23,7 +24,13 @@ var (
 )
 
 func (cka *CreateKeyApi) Validate() {
-	return
+	if cka.key.owner != "" {
+		if ok, err := user.IsUserNameValid(cka.key.owner); !ok {
+			cka.err = err
+			cka.status = http.StatusBadRequest
+			return
+		}
+	}
 }
 
 func (cka *CreateKeyApi) Parse() {
@@ -45,9 +52,10 @@ func (cka *CreateKeyApi) Response() {
 	json := simplejson.New()
 	if cka.err == nil {
 		j := cka.key.Json()
-		json.Set("User", j)
+		json.Set("AccessKey", j)
 	} else {
-		context.Set(cka.req, "request_error", gerror.NewIAMError(cka.status, cka.err))
+		gerr := gerror.NewIAMError(cka.status, cka.err)
+		context.Set(cka.req, "request_error", gerr)
 		json.Set("ErrorMessage", cka.err.Error())
 	}
 	json.Set("RequestId", context.Get(cka.req, "request_id"))
@@ -73,20 +81,15 @@ func (cka *CreateKeyApi) createKey() {
 		return
 	}
 
-	bean := &db.KeyBean{
-		Entity:     cka.key.owner,
-		Entitype:   int(cka.key.ownerType),
-		Status:     int(Active),
-		CreateDate: time.Now().Format(time.RFC3339),
-	}
-	bean, cka.err = db.ActiveService().CreateKey(bean)
+	bean := cka.key.ToBean()
+	bean.CreateDate = time.Now().Format(time.RFC3339)
+	bean.Status = int(Active)
+	cka.err = db.ActiveService().CreateKey(&bean)
 	if cka.err != nil {
 		cka.status = http.StatusInternalServerError
 		return
 	}
-	cka.key.accessKeyId = bean.AccessKeyId.Hex()
-	cka.key.accessKeySecret = bean.AccessKeySecret
-	cka.key.createDate = bean.CreateDate
+	cka.key = FromBean(&bean)
 }
 
 func CreateKeyHandler(w http.ResponseWriter, r *http.Request) {
