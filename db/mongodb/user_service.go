@@ -57,7 +57,7 @@ func (ms *mongoService) GetIamUserById(userId string, usr *db.UserBean) error {
 	session.SetMode(mgo.Monotonic, true)
 
 	c := session.DB("go_iam").C("user")
-	err = c.FindId(userId).One(usr)
+	err = c.FindId(bson.ObjectIdHex(userId)).One(usr)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return db.UserNotExistError
